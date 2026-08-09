@@ -169,4 +169,7 @@ This project was developed to demonstrate practical skills in **web application 
 ## 📸 System Preview
 
 ### Login
-![Login](screenshots/Login.png)
+![Login](screenshots/login.png)
+
+### Kiosk
+![Kiosk](screenshots/kiosk.png)
