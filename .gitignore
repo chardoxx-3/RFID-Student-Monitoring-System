@@ -71,3 +71,36 @@ data dumps and secrets
 datadump.json
 # dataconnect generated files
 .dataconnect
+
+# Python / virtualenv
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.sqlite3
+
+# Django media/static
+media/
+student_photos/
+attendance_photos/
+staticfiles/
+
+# IDEs
+.idea/
+.vscode/
+
+# dotenv
+.env*
+
+# Credentials & dumps
+credentials/
+google_drive_credentials.json
+datadump.json
