@@ -1,0 +1,462 @@
+{% extends "attendance_app/admin/base.html" %}
+{% load static %}
+
+{% block page_title %}Profile Settings{% endblock %}
+
+{% block content %}
+<style>
+    /* --- Page Specific Styles (Navy Theme) --- */
+    
+    /* Card Styling */
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        background-color: white;
+        margin-bottom: 24px;
+        overflow: hidden;
+        height: 100%;
+        transition: transform 0.2s;
+    }
+
+    .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 20px 24px;
+    }
+
+    .card-header h5 {
+        color: #0f172a; /* Navy */
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Form Elements */
+    .form-group {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        position: absolute;
+        left: 45px;
+        top: 12px;
+        color: #64748b;
+        pointer-events: none;
+        transition: all 0.2s ease-out;
+        transform-origin: left center;
+        opacity: 0;
+        padding: 0 5px;
+        background: white;
+        z-index: 10;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .input-group-text {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-right: none;
+        color: #94a3b8;
+        transition: all 0.2s;
+    }
+
+    .form-control {
+        border: 1px solid #e2e8f0;
+        border-left: none;
+        padding: 10px 12px;
+        font-size: 0.95rem;
+        color: #334155;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: none;
+        border-left: 1px solid #3b82f6;
+        margin-left: -1px;
+        z-index: 5;
+    }
+    
+    .form-control:focus + .input-group-text,
+    .input-group:focus-within .input-group-text {
+        border-color: #3b82f6;
+        color: #3b82f6;
+    }
+
+    /* Floating Label Active State */
+    .form-control:focus ~ .form-label,
+    .form-control:not(:placeholder-shown) ~ .form-label {
+        transform: translateY(-24px) scale(0.9);
+        opacity: 1;
+        color: #3b82f6;
+    }
+
+    .form-control::placeholder {
+        color: #94a3b8;
+        opacity: 1;
+        transition: opacity 0.2s;
+    }
+
+    .form-control:focus::placeholder {
+        opacity: 0;
+    }
+
+    /* Readonly Inputs */
+    .form-control:disabled, .form-control[readonly] {
+        background-color: #f1f5f9;
+        color: #64748b;
+    }
+
+    /* Password Specifics */
+    .toggle-password {
+        cursor: pointer;
+        border-left: none;
+        border: 1px solid #e2e8f0;
+        background-color: #fff;
+    }
+    .toggle-password:hover {
+        color: #0f172a;
+        background-color: #f8fafc;
+    }
+
+    .password-hint {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .invalid-feedback {
+        font-size: 0.8rem;
+        margin-top: 5px;
+        color: #ef4444;
+    }
+
+    .is-invalid {
+        border-color: #ef4444 !important;
+    }
+
+    /* Buttons */
+    .btn-primary {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+        padding: 10px 20px;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    .btn-primary:hover {
+        background-color: #2563eb;
+        border-color: #2563eb;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+
+    /* --- New Tips Section Styles --- */
+    .tip-card {
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    }
+    
+    .tip-item {
+        padding: 15px;
+        border-radius: 12px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        height: 100%;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .tip-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        border-color: #cbd5e1;
+    }
+
+    .tip-icon {
+        width: 48px;
+        height: 48px;
+        background-color: #eff6ff; /* Light Blue */
+        color: #3b82f6; /* Accent Blue */
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 12px;
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    .tip-item:hover .tip-icon {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .tip-title {
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 5px;
+        font-size: 0.95rem;
+    }
+
+    .tip-text {
+        font-size: 0.85rem;
+        color: #64748b;
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+</style>
+
+<div class="row g-4 mb-4">
+    <!-- Profile Information Column -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5><i class="fas fa-user-circle text-primary"></i>Personal Details</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="" id="profileForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" 
+                                           value="{{ request.user.first_name }}" placeholder="First Name" required>
+                                    <label for="first_name" class="form-label">First Name</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" 
+                                           value="{{ request.user.last_name }}" placeholder="Last Name" required>
+                                    <label for="last_name" class="form-label">Last Name</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ request.user.email }}" placeholder="Email Address" required>
+                            <label for="email" class="form-label">Email Address</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-at"></i></span>
+                            <input type="text" class="form-control" value="{{ request.user.username }}" readonly placeholder="Username" disabled>
+                            <label class="form-label">Username</label>
+                        </div>
+                        <div class="form-text text-muted small mt-1 ms-1">Username cannot be changed.</div>
+                    </div>
+                    
+                    <div class="mt-4 pt-2">
+                        <button type="submit" class="btn btn-primary w-100" id="profileSubmit">
+                            <i class="fas fa-save me-2"></i> Update Profile
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Change Password Column -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5><i class="fas fa-shield-alt text-primary"></i>Security</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="{% url 'change_password' %}" id="passwordForm">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input type="password" class="form-control {% if password_form.old_password.errors %}is-invalid{% endif %}" 
+                                   id="id_old_password" name="old_password" placeholder="Current Password" required>
+                            <label for="id_old_password" class="form-label">Current Password</label>
+                            <span class="input-group-text toggle-password">
+                                <i class="fas fa-eye text-muted"></i>
+                            </span>
+                        </div>
+                        {% if password_form.old_password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in password_form.old_password.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr class="my-4 border-light">
+                    
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-key"></i></span>
+                            <input type="password" class="form-control {% if password_form.new_password1.errors %}is-invalid{% endif %}" 
+                                   id="id_new_password1" name="new_password1" placeholder="New Password" required>
+                            <label for="id_new_password1" class="form-label">New Password</label>
+                            <span class="input-group-text toggle-password">
+                                <i class="fas fa-eye text-muted"></i>
+                            </span>
+                        </div>
+                        {% if password_form.new_password1.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in password_form.new_password1.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="password-hint">
+                            <i class="fas fa-info-circle"></i> Minimum 8 characters recommended
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-check-circle"></i></span>
+                            <input type="password" class="form-control {% if password_form.new_password2.errors %}is-invalid{% endif %}" 
+                                   id="id_new_password2" name="new_password2" placeholder="Confirm Password" required>
+                            <label for="id_new_password2" class="form-label">Confirm Password</label>
+                            <span class="input-group-text toggle-password">
+                                <i class="fas fa-eye text-muted"></i>
+                            </span>
+                        </div>
+                        {% if password_form.new_password2.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in password_form.new_password2.errors %}
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-4 pt-2">
+                        <button type="submit" class="btn btn-primary w-100" id="passwordSubmit">
+                            <i class="fas fa-key me-2"></i> Change Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Security Tips Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card tip-card">
+            <div class="card-header bg-transparent border-bottom-0 pt-4 px-4 pb-2">
+                <h5><i class="fas fa-shield-virus text-primary"></i> Security Best Practices</h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <div class="row g-3">
+                    <!-- Tip 1 -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="tip-item d-flex flex-column">
+                            <div class="tip-icon">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="tip-title">Strong Passwords</div>
+                            <p class="tip-text">Use a mix of uppercase letters, numbers, and symbols. Avoid using personal dates or common words.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tip 2 -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="tip-item d-flex flex-column">
+                            <div class="tip-icon">
+                                <i class="fas fa-desktop"></i>
+                            </div>
+                            <div class="tip-title">Shared Devices</div>
+                            <p class="tip-text">Always log out when you finish your session, especially on shared school computers or kiosks.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tip 3 -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="tip-item d-flex flex-column">
+                            <div class="tip-icon">
+                                <i class="fas fa-user-shield"></i>
+                            </div>
+                            <div class="tip-title">Role Awareness</div>
+                            <p class="tip-text">As an Administrator, you have access to sensitive data. Never share your login credentials.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tip 4 -->
+                    <div class="col-md-6 col-lg-3">
+                        <div class="tip-item d-flex flex-column">
+                            <div class="tip-icon">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div class="tip-title">Regular Updates</div>
+                            <p class="tip-text">Update your password every 3-6 months. Keep the system software updated to ensure compatibility.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Note: Global loading screen is handled by base.html automatically for forms.
+    
+    // Password visibility toggle
+    document.querySelectorAll('.toggle-password').forEach(function(icon) {
+        icon.addEventListener('click', function() {
+            const input = this.closest('.input-group').querySelector('input');
+            const eyeIcon = this.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+                eyeIcon.classList.add('text-primary');
+            } else {
+                input.type = 'password';
+                eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+                eyeIcon.classList.remove('text-primary');
+            }
+        });
+    });
+    
+    // Initialize floating labels for inputs with values (especially after error reload)
+    $('.form-control').each(function() {
+        if ($(this).val()) {
+            $(this).siblings('.form-label').addClass('active');
+        }
+    });
+
+    // Handle floating label animation on input
+    $('.form-control').on('input blur focus', function() {
+        if ($(this).val()) {
+            $(this).siblings('.form-label').addClass('active');
+        } else {
+            $(this).siblings('.form-label').removeClass('active');
+        }
+    });
+});
+</script>
+{% endblock %}

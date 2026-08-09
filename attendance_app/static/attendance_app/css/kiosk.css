@@ -1,0 +1,258 @@
+/* Kiosk Interface Styles */
+.kiosk-container {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #0D47A1;
+    color: white;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background-image: url('../img/kiosk_bg.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.kiosk-header {
+    margin-bottom: 30px;
+}
+
+.kiosk-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.kiosk-header p {
+    font-size: 1.2rem;
+    opacity: 0.8;
+}
+
+.kiosk-display {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    padding: 30px;
+    width: 80%;
+    max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    color: #212121;
+}
+
+.student-highlight {
+    margin-bottom: 20px;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.student-photo-container {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 15px;
+    border: 5px solid #42A5F5;
+}
+
+.student-photo-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.student-name {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.student-id {
+    font-size: 1rem;
+    color: #757575;
+    margin-bottom: 15px;
+}
+
+.attendance-time {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+}
+
+.time-card {
+    background-color: #E3F2FD;
+    padding: 10px 15px;
+    border-radius: 5px;
+    min-width: 120px;
+}
+
+.time-label {
+    font-size: 0.9rem;
+    color: #757575;
+}
+
+.time-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #0D47A1;
+}
+
+.kiosk-instruction {
+    margin-top: 30px;
+    font-size: 1.1rem;
+    padding: 10px;
+    background-color: rgba(66, 165, 245, 0.2);
+    border-radius: 5px;
+}
+
+.rfid-animation {
+    margin-top: 20px;
+    font-size: 3rem;
+    animation: pulse 2s infinite;
+}
+
+/* Add these styles to your existing kiosk.css */
+
+.student-course,
+.student-section {
+    font-size: 1rem;
+    color: #424242;
+    margin-bottom: 5px;
+}
+
+.student-info-container {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: rgba(66, 165, 245, 0.1);
+    border-radius: 5px;
+}
+
+/* Adjust the student-highlight to accommodate more info */
+.student-highlight {
+    margin-bottom: 20px;
+    animation: fadeIn 0.5s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Make the photo slightly smaller to fit more content */
+.student-photo-container {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 10px;
+    border: 4px solid #42A5F5;
+}
+
+/* Adjust name and ID sizing */
+.student-name {
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+.student-id {
+    font-size: 0.9rem;
+    color: #616161;
+    margin-bottom: 10px;
+}
+
+/* Add some spacing between the student info and time cards */
+.attendance-time {
+    margin-top: 15px;
+}
+
+/* Make the time cards slightly more compact */
+.time-card {
+    padding: 8px 12px;
+    min-width: 110px;
+}
+
+/* Adjust the instruction text area */
+.kiosk-instruction {
+    margin-top: 20px;
+    font-size: 1rem;
+    padding: 8px;
+    line-height: 1.4;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .kiosk-display {
+        width: 95%;
+        padding: 20px;
+    }
+    
+    .attendance-time {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .time-card {
+        width: 100%;
+    }
+}
+
+/* Add these styles to your existing kiosk.css */
+
+.student-course,
+.student-section {
+    font-size: 1rem;
+    color: #424242;
+    margin-bottom: 5px;
+}
+
+.student-info-container {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: rgba(66, 165, 245, 0.1);
+    border-radius: 5px;
+}
+
+/* Adjust the student-highlight to accommodate more info */
+.student-highlight {
+    margin-bottom: 20px;
+    animation: fadeIn 0.5s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Make the photo slightly smaller to fit more content */
+.student-photo-container {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 10px;
+    border: 4px solid #42A5F5;
+}
+
+/* Adjust name and ID sizing */
+.student-name {
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+.student-id {
+    font-size: 0.9rem;
+    color: #616161;
+    margin-bottom: 10px;
+}
+
+/* Add some spacing between the student info and time cards */
+.attendance-time {
+    margin-top: 15px;
+}

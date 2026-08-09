@@ -1,0 +1,502 @@
+{% extends "attendance_app/admin/base.html" %}
+
+{% block page_title %}{{ course.name }} - Sections{% endblock %}
+
+{% block content %}
+<style>
+    /* Custom Styles matching the Navy Theme */
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 20px 24px;
+    }
+
+    .card-header h5 {
+        color: #0f172a; /* Navy */
+        font-weight: 700;
+        margin: 0;
+    }
+
+    /* Table Styling */
+    .table thead th {
+        background-color: #f8fafc;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 16px;
+    }
+
+    .table tbody td {
+        padding: 16px;
+        vertical-align: middle;
+        color: #334155;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    /* Action Buttons in Table */
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s;
+        border: none;
+    }
+
+    .btn-action-view { background-color: #e0f2fe; color: #0284c7; }
+    .btn-action-view:hover { background-color: #0284c7; color: #fff; }
+
+    .btn-action-edit { background-color: #fef3c7; color: #d97706; }
+    .btn-action-edit:hover { background-color: #d97706; color: #fff; }
+
+    .btn-action-delete { background-color: #fee2e2; color: #dc2626; }
+    .btn-action-delete:hover { background-color: #dc2626; color: #fff; }
+
+    /* Modal Form Styling */
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+    }
+
+    .input-group-text {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-right: none;
+        color: #94a3b8;
+    }
+
+    .form-control, .form-select {
+        border: 1px solid #e2e8f0;
+        border-left: none;
+        padding: 10px 12px;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #3b82f6;
+        box-shadow: none;
+    }
+    
+    .input-group:focus-within .input-group-text {
+        border-color: #3b82f6;
+        color: #3b82f6;
+    }
+
+    /* Back Button */
+    .btn-back {
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: none;
+    }
+    .btn-back:hover {
+        background-color: #e2e8f0;
+        color: #0f172a;
+    }
+    
+    /* Stats Badge */
+    .badge-stats {
+        background-color: #f1f5f9;
+        color: #475569;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 500;
+    }
+</style>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <a href="{% url 'view_courses' course.institute.id %}" class="btn btn-back btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Back to Programs">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h5 class="mb-1"><i class="fas fa-layer-group me-2 text-primary"></i>Sections</h5>
+                <small class="text-muted fw-medium">{{ course.name }}</small>
+            </div>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSectionModal">
+            <i class="fas fa-plus me-2"></i> Add Section
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="sectionsTable">
+                <thead>
+                    <tr>
+                        <th width="30%"><i class="fas fa-heading me-2"></i> Section Name</th>
+                        <th width="25%"><i class="fas fa-calendar-alt me-2"></i> Year Level</th>
+                        <th width="20%"><i class="fas fa-users me-2"></i> Students</th>
+                        <th width="25%" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for section in sections %}
+                    <tr id="sectionRow{{ section.id }}">
+                        <td>
+                            <div class="fw-semibold">{{ section.name }}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">{{ section.get_year_level_display }}</span>
+                        </td>
+                        <td>
+                            <span class="badge-stats"><i class="fas fa-user-friends me-1"></i> {{ section.student_set.count }}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'students' %}?section={{ section.id }}" class="btn btn-action btn-action-view me-1" title="View Students">
+                                <i class="fas fa-users"></i>
+                            </a>
+                            <button class="btn btn-action btn-action-edit me-1" data-bs-toggle="modal" data-bs-target="#editSectionModal{{ section.id }}" title="Edit">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="btn btn-action btn-action-delete" data-bs-toggle="modal" 
+                                data-bs-target="#deleteSectionModal" 
+                                data-id="{{ section.id }}"
+                                data-name="{{ section.name }}"
+                                data-course-id="{{ course.id }}" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="far fa-folder-open fa-3x mb-3 opacity-50"></i>
+                                <p class="mb-0">No sections found for this course.</p>
+                                <small>Click "Add Section" to create one.</small>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Section Modal -->
+<div class="modal fade" id="addSectionModal" tabindex="-1" aria-labelledby="addSectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-primary" id="addSectionModalLabel">Add New Section</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'add_section' course.id %}" id="addSectionForm">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="form-group">
+                        <label for="name" class="form-label">Section Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-heading"></i></span>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   placeholder="e.g. Section A, Group 1" required autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="year_level" class="form-label">Year Level</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-layer-group"></i></span>
+                            <select class="form-select" id="year_level" name="year_level" required>
+                                <option value="" selected disabled>Select Year Level</option>
+                                <option value="1">First Year</option>
+                                <option value="2">Second Year</option>
+                                <option value="3">Third Year</option>
+                                <option value="4">Fourth Year</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                         Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary px-4" id="addSectionSubmit">
+                        <i class="fas fa-check me-2"></i> Save Section
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Section Modals - One for each section -->
+{% for section in sections %}
+<div class="modal fade" id="editSectionModal{{ section.id }}" tabindex="-1" aria-labelledby="editSectionModalLabel{{ section.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-primary" id="editSectionModalLabel{{ section.id }}">Edit Section</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'edit_section' section.id %}" id="editSectionForm{{ section.id }}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="form-group">
+                        <label for="name{{ section.id }}" class="form-label">Section Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-heading"></i></span>
+                            <input type="text" class="form-control" id="name{{ section.id }}" name="name" 
+                                   value="{{ section.name }}" placeholder="Enter section name" required>
+                        </div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="year_level{{ section.id }}" class="form-label">Year Level</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-layer-group"></i></span>
+                            <select class="form-select" id="year_level{{ section.id }}" name="year_level" required>
+                                <option value="1" {% if section.year_level == 1 %}selected{% endif %}>First Year</option>
+                                <option value="2" {% if section.year_level == 2 %}selected{% endif %}>Second Year</option>
+                                <option value="3" {% if section.year_level == 3 %}selected{% endif %}>Third Year</option>
+                                <option value="4" {% if section.year_level == 4 %}selected{% endif %}>Fourth Year</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                         Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary px-4" id="editSectionSubmit{{ section.id }}">
+                        <i class="fas fa-save me-2"></i> Update Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Delete Section Confirmation Modal -->
+<div class="modal fade" id="deleteSectionModal" tabindex="-1" aria-labelledby="deleteSectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title text-white" id="deleteSectionModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="avatar-lg bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="fas fa-trash-alt fa-2x"></i>
+                    </div>
+                    <h5 class="mb-2">Delete Section?</h5>
+                    <p class="text-muted">You are about to delete <strong class="text-dark"><span id="sectionToDeleteName"></span></strong>.</p>
+                </div>
+
+                <div class="alert alert-danger bg-danger-subtle border-danger-subtle text-danger mb-0 rounded-3">
+                    <div class="d-flex">
+                        <i class="fas fa-exclamation-circle mt-1 me-3"></i>
+                        <div>
+                            <strong>Warning:</strong> This will permanently remove all student records associated with this section.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-light px-3" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteSectionForm" method="post" action="">
+                    {% csrf_token %}
+                    <input type="hidden" id="courseIdInput" name="course_id" value="">
+                    <button type="submit" class="btn btn-danger px-4" id="deleteSectionSubmit">
+                        <i class="fas fa-trash me-2"></i>Yes, Delete It
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Function to show alert messages
+    function showAlert(message, type) {
+        var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        var icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        
+        var alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show border-0 shadow-sm" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas ${icon} me-2"></i>
+                    <div>${message}</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>`;
+        
+        // Add alert at the top of the container
+        $('.container-fluid').prepend(alertHtml);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+    }
+
+    // Edit Section Form Submissions with AJAX
+    $('form[id^="editSectionForm"]').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        var sectionId = form.attr('id').replace('editSectionForm', '');
+        var modal = $('#editSectionModal' + sectionId);
+        
+        if (typeof window.showLoadingScreen === 'function') {
+            window.showLoadingScreen();
+        }
+        
+        $.ajax({
+            type: 'POST',
+            url: form.attr('action'),
+            data: form.serialize(),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (typeof window.hideLoadingScreen === 'function') {
+                        window.hideLoadingScreen();
+                    }
+                    modal.modal('hide');
+                    
+                    // Show success message
+                    showAlert('Section updated successfully', 'success');
+                    
+                    // Update the table row
+                    var row = $('#sectionRow' + sectionId);
+                    row.find('td:eq(0) div').text(response.section.name);
+                    row.find('td:eq(1) span').text(response.section.year_level_display);
+                    // Update student count text but keep the icon
+                    var statsBadge = row.find('td:eq(2) .badge-stats');
+                    statsBadge.html('<i class="fas fa-user-friends me-1"></i> ' + response.section.student_count);
+                }
+            },
+            error: function(xhr) {
+                if (typeof window.hideLoadingScreen === 'function') {
+                    window.hideLoadingScreen();
+                }
+                if (xhr.status === 400) {
+                    // Handle form errors
+                    var response = xhr.responseJSON;
+                    var errorMsg = response.message || 'Please correct the errors below.';
+                    showAlert(errorMsg, 'error');
+                } else {
+                    showAlert('An error occurred while updating the section', 'error');
+                }
+            }
+        });
+    });
+
+    // Delete Section Form Submission
+    $('#deleteSectionForm').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        
+        if (typeof window.showLoadingScreen === 'function') {
+            window.showLoadingScreen();
+        }
+        
+        $.ajax({
+            type: 'POST',
+            url: form.attr('action'),
+            data: form.serialize(),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (typeof window.hideLoadingScreen === 'function') {
+                        window.hideLoadingScreen();
+                    }
+                    $('#deleteSectionModal').modal('hide');
+                    
+                    // Show success message
+                    showAlert('Section deleted successfully', 'success');
+                    
+                    // Remove the deleted row from table
+                    var deletedId = form.attr('action').split('/').filter(Boolean).pop();
+                    $('#sectionRow' + deletedId).fadeOut(300, function() {
+                        $(this).remove();
+                        // If no sections left, show empty message
+                        if ($('#sectionsTable tbody tr').length === 0) {
+                            $('#sectionsTable tbody').html('<tr><td colspan="4" class="text-center py-5"><div class="text-muted"><i class="far fa-folder-open fa-3x mb-3 opacity-50"></i><p class="mb-0">No sections found for this course.</p><small>Click "Add Section" to create one.</small></div></td></tr>');
+                        }
+                    });
+                } else {
+                    if (typeof window.hideLoadingScreen === 'function') {
+                        window.hideLoadingScreen();
+                    }
+                    showAlert('Error: ' + response.message, 'error');
+                }
+            },
+            error: function(xhr) {
+                if (typeof window.hideLoadingScreen === 'function') {
+                    window.hideLoadingScreen();
+                }
+                showAlert('An error occurred while deleting the section', 'error');
+                $('#deleteSectionModal').modal('hide');
+            }
+        });
+    });
+
+    // Hide loading when modals are closed (in case of errors)
+    $('.modal').on('hidden.bs.modal', function() {
+        if (typeof window.hideLoadingScreen === 'function') {
+            window.hideLoadingScreen();
+        }
+    });
+
+    // Delete Section Modal Handler
+    $('#deleteSectionModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var sectionId = button.data('id');
+        var sectionName = button.data('name');
+        var courseId = button.data('course-id');
+        var modal = $(this);
+        
+        modal.find('#sectionToDeleteName').text(sectionName);
+        modal.find('#deleteSectionForm').attr('action', '/sections/delete/' + sectionId + '/');
+        modal.find('#courseIdInput').val(courseId);
+    });
+});
+
+// Auto-hide messages after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        var messages = document.querySelectorAll('.alert');
+        messages.forEach(function(message) {
+            var fade = new bootstrap.Alert(message);
+            fade.close();
+        });
+    }, 5000);
+});
+</script>
+{% endblock %}

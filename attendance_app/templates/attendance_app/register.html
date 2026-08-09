@@ -1,0 +1,576 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - CPSC Student Monitoring System</title>
+    
+    <!-- Google Fonts: Inter & Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    #djDebug { display: none !important; }
+    :root {
+        /* True Navy Blue Theme - Same as Login */
+        --primary-navy: #001f3f;       
+        --secondary-navy: #003366;     
+        --accent-blue: #3b82f6;        
+        --accent-glow: #60a5fa;
+        --text-dark: #334155;
+        --text-light: #94a3b8;
+        --white: #ffffff;
+        --error-red: #dc2626;
+        --success-green: #16a34a;
+    }
+
+    body {
+        min-height: 100vh;
+        font-family: 'Inter', sans-serif;
+        background-color: var(--primary-navy);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden; /* Prevent body scroll */
+        margin: 0;
+    }
+
+    /* --- Advanced Background Animation (Same as Login) --- */
+    .animated-bg {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        z-index: -1;
+        background: radial-gradient(at 0% 0%, hsla(210, 100%, 12%, 1) 0, transparent 50%), 
+                    radial-gradient(at 50% 0%, hsla(210, 100%, 20%, 1) 0, transparent 50%), 
+                    radial-gradient(at 100% 0%, hsla(210, 100%, 12%, 1) 0, transparent 50%);
+        background-size: 200% 200%;
+        animation: gradientFlow 15s ease infinite;
+    }
+
+    .bg-shape {
+        position: absolute;
+        filter: blur(80px);
+        opacity: 0.5;
+        z-index: -1;
+        animation: floatShape 20s infinite alternate;
+    }
+    .shape-1 { top: -10%; right: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, var(--accent-blue) 0%, transparent 70%); }
+    .shape-2 { bottom: -10%; left: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, #0044cc 0%, transparent 70%); animation-delay: -5s; }
+
+    @keyframes gradientFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    @keyframes floatShape { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(50px, 50px) scale(1.1); } }
+
+    /* --- Layout --- */
+    .register-wrapper {
+        width: 100%;
+        max-width: 1100px; /* Matches Login */
+        padding: 20px;
+        z-index: 10;
+        height: 100vh; /* Full height to center content */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .register-card {
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 24px; /* Matches Login */
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+        overflow: hidden;
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        /* Dynamic height to fit content without scroll, but capped */
+        max-height: 95vh; 
+        position: relative;
+    }
+
+    /* --- Left Side: Info (Same Style as Login Right Side) --- */
+    .info-side {
+        flex: 1;
+        background: linear-gradient(135deg, var(--primary-navy) 0%, var(--secondary-navy) 100%);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 50px;
+        color: var(--white);
+    }
+    
+    .info-side::before {
+        content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 30px 30px; opacity: 0.2;
+    }
+
+    .info-content { position: relative; z-index: 2; }
+    
+    .brand-logo-white { 
+        height: 50px; /* Increased to match visual weight */
+        width: auto; 
+        margin-bottom: 25px; 
+    }
+    
+    .info-title { 
+        font-family: 'Poppins', sans-serif; 
+        font-size: 2.2rem; /* Matches Login Title Scale */
+        font-weight: 700; 
+        line-height: 1.2;
+        margin-bottom: 20px; 
+    }
+    
+    .info-desc { 
+        font-size: 1.05rem; 
+        opacity: 0.9; 
+        margin-bottom: 30px; 
+        line-height: 1.6; 
+        color: #e2e8f0; 
+    }
+    
+    .steps-list { display: grid; gap: 20px; }
+    .step-item { display: flex; align-items: center; }
+    .step-icon { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: 700; font-size: 1rem; }
+    .step-text h6 { margin: 0; font-weight: 600; font-size: 1rem; }
+    .step-text span { font-size: 0.85rem; opacity: 0.8; display: block; }
+
+    /* --- Right Side: Form (UPDATED TO MATCH LOGIN SIZES) --- */
+    .register-form-side {
+        flex: 1.3;
+        padding: 30px 45px; /* Tighter padding than login to fit vertical space */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: var(--white);
+        position: relative;
+    }
+
+    .form-header {
+        margin-bottom: 20px;
+        text-align: left; /* Aligned Left as requested */
+    }
+
+    .form-title {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        font-size: 2rem; /* Matches Login "Welcome Back" size */
+        color: var(--primary-navy);
+        margin-bottom: 5px;
+    }
+
+    .form-subtitle { 
+        color: var(--text-light); 
+        font-size: 0.95rem; /* Matches Login */
+    }
+
+    /* Form Elements - Matches Login.html Specs */
+    .form-row { 
+        display: flex; 
+        gap: 15px; 
+        margin-bottom: 0; 
+    }
+    .col-half { flex: 1; }
+
+    .form-group {
+        margin-bottom: 15px; /* Slightly tighter than Login (25px) to prevent scrolling */
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: var(--primary-navy);
+        font-size: 0.9rem; /* Matches Login */
+        margin-left: 5px;
+    }
+
+    .input-wrapper { position: relative; }
+
+    .input-icon {
+        position: absolute;
+        left: 20px; /* Matches Login */
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-light);
+        transition: color 0.3s;
+        z-index: 5;
+        font-size: 1rem;
+    }
+
+    .form-control {
+        height: 52px; /* Close to Login's 55px, slightly reduced to fit 5 rows */
+        padding-left: 50px; /* Matches Login style */
+        padding-right: 20px;
+        border-radius: 12px; /* Matches Login */
+        border: 2px solid #e2e8f0;
+        background-color: #f8fafc;
+        font-size: 1rem; /* Matches Login */
+        font-weight: 500;
+        color: var(--primary-navy);
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .form-control:focus {
+        border-color: var(--secondary-navy);
+        background-color: var(--white);
+        box-shadow: 0 0 0 4px rgba(0, 31, 63, 0.1);
+    }
+
+    .form-control:focus + .input-icon,
+    .form-control:focus ~ .input-icon,
+    .input-wrapper:focus-within .input-icon {
+        color: var(--secondary-navy);
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 20px; /* Matches Login */
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: var(--text-light);
+        z-index: 5;
+        font-size: 1rem;
+    }
+    .toggle-password:hover { color: var(--secondary-navy); }
+
+    /* Password Strength */
+    .password-strength { height: 3px; width: 100%; background: #e2e8f0; margin-top: 5px; border-radius: 2px; }
+    .password-strength-bar { height: 100%; width: 0; transition: width 0.3s; }
+    .strength-weak { background: var(--error-red); width: 33%; }
+    .strength-medium { background: #f59e0b; width: 66%; }
+    .strength-strong { background: var(--success-green); width: 100%; }
+
+    .validation-feedback { font-size: 0.8rem; margin-top: 3px; display: none; align-items: center; gap: 5px; }
+    .validation-feedback.show { display: flex; }
+    .validation-invalid { color: var(--error-red); }
+    .validation-valid { color: var(--success-green); }
+
+    /* Button - Matches Login Specs */
+    .btn-register {
+        height: 55px; /* Matches Login */
+        width: 100%;
+        border-radius: 12px; /* Matches Login */
+        background: linear-gradient(135deg, var(--primary-navy) 0%, var(--secondary-navy) 100%);
+        color: var(--white);
+        font-weight: 600;
+        font-size: 1.1rem; /* Matches Login */
+        border: none;
+        box-shadow: 0 10px 20px -10px rgba(0, 31, 63, 0.5);
+        margin-top: 10px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-register::after {
+        content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: 0.5s;
+    }
+    .btn-register:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px -10px rgba(0, 31, 63, 0.6);
+        background: linear-gradient(135deg, #002855 0%, #004080 100%);
+    }
+    .btn-register:hover::after { left: 100%; }
+
+    .auth-footer { margin-top: 20px; text-align: center; font-size: 0.9rem; color: var(--text-light); }
+    .auth-link { color: var(--secondary-navy); font-weight: 600; text-decoration: none; }
+    .auth-link:hover { text-decoration: underline; color: var(--primary-navy); }
+
+    /* Notifications */
+    .notification-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        body { overflow: auto; padding: 20px 0; }
+        .register-wrapper { height: auto; display: block; max-width: 600px; }
+        .register-card { flex-direction: column-reverse; max-height: none; }
+        .register-form-side { padding: 40px 30px; }
+    }
+    
+    @media (max-width: 576px) {
+        .form-row { flex-direction: column; gap: 0; }
+    }
+    
+    /* Shake Animation */
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 90% { transform: translateX(-4px); } 30%, 70% { transform: translateX(4px); } }
+    .shake { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+    .has-error .form-control { border-color: var(--error-red) !important; }
+    .has-error .input-icon { color: var(--error-red) !important; }
+</style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer">
+        {% if form.errors %}
+        <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center" role="alert" style="background: white; border-left: 5px solid #dc2626 !important;">
+            <i class="fas fa-exclamation-circle text-danger me-3" style="font-size: 1.2rem;"></i>
+            <div>
+                <strong>Registration Error</strong>
+                <div class="small text-muted">Please correct the errors below.</div>
+            </div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="register-wrapper">
+        <div class="register-card">
+            
+            <!-- Left Side: Info Panel (Reversed) -->
+            <div class="info-side">
+                <div class="info-content">
+                    {% if system_settings.logo %}
+                        <img src="{{ system_settings.logo.url }}" alt="Logo" class="brand-logo-white">
+                    {% else %}
+                        <img src="{% static 'attendance_app/img/logo.png' %}" alt="Logo" class="brand-logo-white">
+                    {% endif %}
+                    
+                    <h2 class="info-title">Join the System</h2>
+                    <p class="info-desc">Create your administrator account to start managing student attendance, generating reports, and monitoring campus safety.</p>
+                    
+                    <div class="steps-list">
+                        <div class="step-item">
+                            <div class="step-icon">1</div>
+                            <div class="step-text">
+                                <h6>Create Account</h6>
+                                <span>Fill in your details to set up your profile.</span>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-icon">2</div>
+                            <div class="step-text">
+                                <h6>Configure System</h6>
+                                <span>Set up departments, courses, and sections.</span>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-icon">3</div>
+                            <div class="step-text">
+                                <h6>Start Monitoring</h6>
+                                <span>Connect hardware and begin tracking attendance.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Form -->
+            <div class="register-form-side">
+                <div class="form-header">
+                    <h1 class="form-title">Create Account</h1>
+                    <p class="form-subtitle">Enter your details below to get started.</p>
+                </div>
+                
+                <form method="post" action="{% url 'register' %}" id="registerForm">
+                    {% csrf_token %}
+                    
+                    <!-- Row 1: Name (Split to save space) -->
+                    <div class="form-row">
+                        <div class="col-half">
+                            <div class="form-group">
+                                <label for="first_name" class="form-label">First Name</label>
+                                <div class="input-wrapper">
+                                    <i class="fas fa-user input-icon"></i>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" value="{{ form.first_name.value|default:'' }}" placeholder="Enter first name" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-half">
+                            <div class="form-group">
+                                <label for="last_name" class="form-label">Last Name</label>
+                                <div class="input-wrapper">
+                                    <i class="fas fa-user input-icon"></i>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" value="{{ form.last_name.value|default:'' }}" placeholder="Enter last name" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email Address</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ form.email.value|default:'' }}" placeholder="email@example.com" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Username -->
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-at input-icon"></i>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ form.username.value|default:'' }}" placeholder="username" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Password -->
+                    <div class="form-group">
+                        <label for="password1" class="form-label">Password</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" class="form-control" id="password1" name="password1" placeholder="Enter password" required>
+                            <i class="fas fa-eye toggle-password" id="togglePassword1"></i>
+                        </div>
+                        <div class="password-strength"><div class="password-strength-bar" id="passwordStrengthBar"></div></div>
+                    </div>
+                    
+                    <!-- Confirm Password -->
+                    <div class="form-group">
+                        <label for="password2" class="form-label">Confirm Password</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-check-circle input-icon"></i>
+                            <input type="password" class="form-control" id="password2" name="password2" placeholder="Confirm password" required>
+                            <i class="fas fa-eye toggle-password" id="togglePassword2"></i>
+                        </div>
+                        <div class="validation-feedback" id="passwordMatchFeedback"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn-register">Create Account</button>
+                    
+                    <div class="auth-footer">
+                        <p>Already have an account? <a href="{% url 'login' %}" class="auth-link">Sign In</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Loading Screen Implementation from Base
+        window.showLoadingScreen = function() {
+            if (!document.getElementById('loading-screen')) {
+                const loadingScreen = document.createElement('div');
+                loadingScreen.id = 'loading-screen';
+                loadingScreen.className = 'loading-screen';
+                loadingScreen.innerHTML = `
+                    <div class="loading-content">
+                        <div class="loading-logo">
+                            {% if system_settings.logo %}
+                                <img src="{{ system_settings.logo.url }}" alt="System Logo">
+                            {% else %}
+                                <img src="{% static 'attendance_app/img/logo.png' %}" alt="CPSC Logo">
+                            {% endif %}
+                        </div>
+                        <div class="loading-title">
+                            {{ system_settings.system_title|default:"Camiguin Polytechnic State College" }}
+                        </div>
+                        <div class="loading-subtitle">
+                            Student Monitoring System
+                        </div>
+                        <div class="loading-animation">
+                            <div class="loading-spinner"></div>
+                        </div>
+                        <div class="loading-text">
+                            Processing...
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(loadingScreen);
+                
+                const styles = `
+                    .loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.98); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
+                    .loading-content { text-align: center; max-width: 1000px; padding: 2rem; animation: fadeIn 0.5s ease-out; }
+                    .loading-logo { margin-bottom: 1.5rem; }
+                    .loading-logo img { width: 80px; height: 80px; object-fit: contain; }
+                    .loading-title { font-size: 1.5rem; font-weight: 700; color: #001f3f; margin-bottom: 0.25rem; }
+                    .loading-subtitle { font-size: 0.9rem; color: #64748b; margin-bottom: 2rem; }
+                    .loading-spinner { width: 50px; height: 50px; border: 3px solid rgba(0, 31, 63, 0.1); border-radius: 50%; border-top-color: #3b82f6; margin: 0 auto; animation: spin 0.8s linear infinite; }
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                    .loading-text { margin-top: 1rem; font-size: 0.875rem; color: #64748b; font-weight: 500; }
+                `;
+                const styleSheet = document.createElement('style');
+                styleSheet.textContent = styles;
+                document.head.appendChild(styleSheet);
+            }
+            const loadingScreen = document.getElementById('loading-screen');
+            loadingScreen.style.display = 'flex';
+            setTimeout(() => { loadingScreen.style.opacity = '1'; }, 10);
+        };
+        
+        window.hideLoadingScreen = function() {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
+            }
+        };
+
+        // Toggle Password
+        function setupToggle(pId, tId) {
+            document.getElementById(tId).addEventListener('click', function() {
+                const inp = document.getElementById(pId);
+                const type = inp.getAttribute('type') === 'password' ? 'text' : 'password';
+                inp.setAttribute('type', type);
+                this.classList.toggle('fa-eye');
+                this.classList.toggle('fa-eye-slash');
+                if(type === 'text') this.style.color = 'var(--secondary-navy)';
+                else this.style.color = '';
+            });
+        }
+        setupToggle('password1', 'togglePassword1');
+        setupToggle('password2', 'togglePassword2');
+        
+        // Strength & Match
+        const p1 = document.getElementById('password1');
+        const p2 = document.getElementById('password2');
+        const bar = document.getElementById('passwordStrengthBar');
+        const fb = document.getElementById('passwordMatchFeedback');
+
+        p1.addEventListener('input', function() {
+            let s = 0; const v = this.value;
+            if(v.length > 7) s++; if(/[A-Z0-9]/.test(v)) s++; if(/[^a-zA-Z0-9]/.test(v)) s++;
+            bar.className = 'password-strength-bar ' + (s==1?'strength-weak':s==2?'strength-medium':s==3?'strength-strong':'');
+            checkMatch();
+        });
+
+        function checkMatch() {
+            if(!p2.value) return fb.className = 'validation-feedback';
+            if(p1.value === p2.value) {
+                fb.className = 'validation-feedback validation-valid show';
+                fb.innerHTML = '<i class="fas fa-check"></i> Passwords match';
+            } else {
+                fb.className = 'validation-feedback validation-invalid show';
+                fb.innerHTML = '<i class="fas fa-times"></i> Passwords do not match';
+            }
+        }
+        p2.addEventListener('input', checkMatch);
+
+        // Submit & Validation
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            let err = false;
+            this.querySelectorAll('input[required]').forEach(i => {
+                if(!i.value.trim()) { i.closest('.form-group').classList.add('has-error','shake'); err=true; setTimeout(()=>i.closest('.form-group').classList.remove('shake'),500); }
+            });
+            if(p1.value !== p2.value) { p2.closest('.form-group').classList.add('has-error','shake'); err=true; setTimeout(()=>p2.closest('.form-group').classList.remove('shake'),500); }
+            
+            if(err) e.preventDefault();
+            else showLoadingScreen();
+        });
+        
+        document.querySelectorAll('input').forEach(i => i.addEventListener('input', function(){ this.closest('.form-group').classList.remove('has-error'); }));
+
+        window.addEventListener('load', function() {
+            // Check for error alert
+            const alert = document.querySelector('.alert-danger');
+            if(alert) hideLoadingScreen();
+        });
+    </script>
+</body>
+</html>

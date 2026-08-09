@@ -1,0 +1,231 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Attendance Report</title>
+    <style>
+        #djDebug {
+            display: none !important;
+        }
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 12px;
+            color: #000;
+            background: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #001f3f; /* Changed to Navy */
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #001f3f; /* Changed to Navy */
+            text-transform: uppercase;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            font-size: 14px;
+            color: #666; /* Matched color */
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 10px; /* Added padding */
+            background-color: #f8fafc; /* Added background */
+            border-radius: 8px; /* Added radius */
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 11px; /* Matched font size */
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #001f3f; /* Changed to Navy */
+            color: #ffffff; /* Changed to White */
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 10px; /* Matched font size */
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .time-col {
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+            width: 80px;
+            text-align: center;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: right;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+
+/* Print Specifics */
+        @media print {
+            /* NEW: Hides the browser header/footer (URL, Date, Page Title) */
+            @page {
+                margin: 0;
+                size: auto;
+            }
+            
+            /* NEW: Adds margin to the content since page margin is 0 */
+            body { 
+                margin: 1cm;
+                padding: 0;
+            }
+
+            /* --- START OF FIX --- */
+            /* This forces the browser to render background colors */
+            * {
+                -webkit-print-color-adjust: exact !important;   /* Chrome, Safari, Edge */
+                print-color-adjust: exact !important;           /* Firefox */
+            }
+            /* --- END OF FIX --- */
+
+            .no-print { display: none; }
+            table { page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+        }
+
+        .btn-print {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #001f3f;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .btn-print:hover { background: #003366; }
+    </style>
+</head>
+<body>
+
+    <!-- Print Button (Hidden when actually printing) -->
+    <button onclick="window.print()" class="btn-print no-print">Print / Save as PDF</button>
+
+    <div class="header">
+        <h1>Attendance Report</h1>
+        <p>Student Attendance System Records</p>
+    </div>
+
+    <div class="meta-info">
+        <div>
+            Filters: {{ filters }}
+        </div>
+        <div>
+            Period: 
+            {% if start_date %}
+                {{ start_date|date:"M d, Y" }} - {{ end_date|date:"M d, Y" }}
+            {% else %}
+                All Records
+            {% endif %}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Section</th>
+                <th class="time-col">AM In</th>
+                <th class="time-col">AM Out</th>
+                <th class="time-col">PM In</th>
+                <th class="time-col">PM Out</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+            <tr>
+                <td>{{ record.date|date:"M d, Y" }}</td>
+                <td>{{ record.student.student_id }}</td>
+                <td>{{ record.student.last_name }}, {{ record.student.first_name }}</td>
+                <td>
+                    {% if record.student.section.course.institute %}
+                        {{ record.student.section.course.institute.code }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ record.student.section.name }}</td>
+                
+                <td class="time-col">
+                    {% if record.morning_in %}
+                        {{ record.morning_in|time:"h:i A" }}
+                    {% else %}-{% endif %}
+                </td>
+                <td class="time-col">
+                    {% if record.morning_out %}
+                        {{ record.morning_out|time:"h:i A" }}
+                    {% else %}-{% endif %}
+                </td>
+                <td class="time-col">
+                    {% if record.afternoon_in %}
+                        {{ record.afternoon_in|time:"h:i A" }}
+                    {% else %}-{% endif %}
+                </td>
+                <td class="time-col">
+                    {% if record.afternoon_out %}
+                        {{ record.afternoon_out|time:"h:i A" }}
+                    {% else %}-{% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 20px;">No records found for the selected criteria.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Generated on {{ generated_at|date:"F d, Y h:i A" }} by {{ generated_by }}
+    </div>
+
+    <script>
+        // Automatically open print dialog on load
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,503 @@
+{% extends "attendance_app/admin/base.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    /* Dashboard Specific Styles (Overrides original inline styles) */
+    
+    /* Grid Layout */
+    .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 24px;
+        margin-bottom: 30px;
+    }
+    
+    /* Stats Cards */
+    .dashboard-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.04);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    
+    /* clickable cards styling */
+    .dashboard-card.clickable {
+        cursor: pointer;
+    }
+    
+    .dashboard-card.clickable:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Active Filter State */
+    .dashboard-card.active-filter {
+        border: 2px solid #3b82f6;
+        background-color: #f8fafc;
+    }
+    
+    /* Remove old border logic, use Icon backgrounds instead */
+    .dashboard-card.today, .dashboard-card.students, 
+    .dashboard-card.am, .dashboard-card.pm {
+        border-left: none;
+    }
+
+    .card-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-bottom: 16px;
+    }
+    
+    /* Color Variants for Icons */
+    .dashboard-card.today .card-icon-wrapper { background-color: #eff6ff; color: #3b82f6; } /* Blue */
+    .dashboard-card.students .card-icon-wrapper { background-color: #f0fdf4; color: #22c55e; } /* Green */
+    .dashboard-card.am .card-icon-wrapper { background-color: #fff7ed; color: #f97316; } /* Orange */
+    .dashboard-card.pm .card-icon-wrapper { background-color: #faf5ff; color: #a855f7; } /* Purple */
+
+    /* Typography inside cards */
+    .card-title {
+        font-size: 0.875rem;
+        color: #64748b;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 4px;
+    }
+    
+    .card-value {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: #0f172a; /* Navy Dark */
+        margin-bottom: 4px;
+        line-height: 1.2;
+    }
+    
+    .card-subtext {
+        font-size: 0.875rem;
+        color: #94a3b8;
+    }
+    
+    /* Recent Attendance Section */
+    .recent-attendance {
+        margin-top: 35px;
+    }
+    
+    .attendance-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid rgba(0,0,0,0.04);
+        overflow: hidden;
+    }
+    
+    .attendance-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: white;
+    }
+    
+    .attendance-header h5 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .attendance-body {
+        padding: 24px;
+        background-color: #f8fafc;
+        min-height: 200px;
+    }
+    
+    .student-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+    }
+    
+    /* Student Cards */
+    .student-card {
+        display: flex;
+        padding: 16px;
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+        align-items: flex-start;
+    }
+    
+    .student-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        border-color: #bfdbfe;
+    }
+    
+    .student-photo {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 16px;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background-color: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+    
+    .student-info {
+        flex: 1;
+        min-width: 0; /* Prevents text overflow issues */
+    }
+    
+    .student-name {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 2px;
+        color: #1e293b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .student-meta {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-bottom: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+    }
+    
+    .student-meta span {
+        display: inline-block;
+    }
+    
+    /* Updated Time Layout */
+    .attendance-times-stack {
+        display: flex;
+        flex-direction: column; /* Stacks AM on top of PM */
+        gap: 8px;
+        padding-top: 10px;
+        border-top: 1px dashed #e2e8f0;
+        width: 100%;
+    }
+
+    .time-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        min-height: 24px; /* Maintains height even if empty to avoid jumping */
+    }
+    
+    /* Time Badges */
+    .time-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        line-height: 1;
+    }
+    
+    .time-badge i { font-size: 0.9em; }
+    
+    .time-badge.am-in { background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+    .time-badge.am-out { background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
+    .time-badge.pm-in { background-color: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7; }
+    .time-badge.pm-out { background-color: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; }
+    
+    /* Empty States */
+    .empty-state {
+        padding: 60px 0;
+        text-align: center;
+        color: #94a3b8;
+        background: white;
+        border-radius: 12px;
+    }
+    
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        color: #cbd5e1;
+    }
+    
+    .empty-state p {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    
+    /* Hidden class for JS filtering */
+    .d-none-filter {
+        display: none !important;
+    }
+</style>
+
+<div class="dashboard-cards">
+    <!-- Today (Reset Filter) -->
+    <div class="dashboard-card today clickable active-filter" onclick="filterAttendance('all', this)">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="card-title">Today's Attendance</div>
+                <div class="card-value">{{ today_attendance_count }}</div>
+            </div>
+            <div class="card-icon-wrapper">
+                <i class="fas fa-calendar-day"></i>
+            </div>
+        </div>
+        <div class="card-subtext">
+            <i class="far fa-clock me-1"></i> {{ today_date }}
+        </div>
+    </div>
+    
+    <!-- Students (Not clickable for filtering, just stats) -->
+    <div class="dashboard-card students">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="card-title">Total Students</div>
+                <div class="card-value">{{ total_students }}</div>
+            </div>
+            <div class="card-icon-wrapper">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+        <div class="card-subtext">
+            <i class="fas fa-check-circle me-1"></i> Registered in system
+        </div>
+    </div>
+    
+    <!-- AM Filter -->
+    <div class="dashboard-card am clickable" onclick="filterAttendance('am', this)">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="card-title">AM Session</div>
+                <div class="card-value">{{ am_present_count }}</div>
+            </div>
+            <div class="card-icon-wrapper">
+                <i class="fas fa-sun"></i>
+            </div>
+        </div>
+        <div class="card-subtext">
+            <i class="fas fa-user-check me-1"></i> Present this morning
+        </div>
+    </div>
+    
+    <!-- PM Filter -->
+    <div class="dashboard-card pm clickable" onclick="filterAttendance('pm', this)">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="card-title">PM Session</div>
+                <div class="card-value">{{ pm_present_count }}</div>
+            </div>
+            <div class="card-icon-wrapper">
+                <i class="fas fa-moon"></i>
+            </div>
+        </div>
+        <div class="card-subtext">
+            <i class="fas fa-user-check me-1"></i> Present this afternoon
+        </div>
+    </div>
+</div>
+
+<div class="recent-attendance">
+    <div class="attendance-card">
+        <div class="attendance-header">
+            <h5>
+                <span class="bg-primary-subtle text-primary rounded p-2 me-2" style="font-size: 0.8em;">
+                    <i class="fas fa-clock"></i>
+                </span> 
+                <span id="attendance-list-title">Recent Attendance Records</span>
+            </h5>
+            <a href="{% url 'reports' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View All</a>
+        </div>
+        
+        <div class="attendance-body">
+            {% if recent_attendance %}
+            <div class="student-grid" id="attendance-grid">
+                {% for record in recent_attendance %}
+                <!-- Added data-am and data-pm attributes for filtering -->
+                <div class="student-card" 
+                     data-am="{% if record.morning_in %}true{% else %}false{% endif %}"
+                     data-pm="{% if record.afternoon_in %}true{% else %}false{% endif %}">
+                    
+                    {% if record.student.photo %}
+                    <img src="{{ record.student.photo.url }}" class="student-photo" alt="{{ record.student.full_name }}">
+                    {% else %}
+                    <div class="student-photo">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="student-info">
+                        <div class="student-name">{{ record.student.full_name }}</div>
+                        <div class="student-meta">
+                            <span class="badge bg-light text-dark border">{{ record.student.student_id }}</span>
+                            <span>•</span>
+                            <span>{{ record.student.section.course.code }}</span>
+                            <span>•</span>
+                            <span>{{ record.student.section.name }}</span>
+                        </div>
+                        
+                        <div class="attendance-times-stack">
+                            <!-- AM Row -->
+                            <div class="time-row am-session-row">
+                                {% if record.morning_in %}
+                                <span class="time-badge am-in" title="Morning In">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                    {{ record.morning_in|time:"h:i A" }}
+                                </span>
+                                {% endif %}
+                                
+                                {% if record.morning_out %}
+                                <span class="time-badge am-out" title="Morning Out">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    {{ record.morning_out|time:"h:i A" }}
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- PM Row -->
+                            <div class="time-row pm-session-row">
+                                {% if record.afternoon_in %}
+                                <span class="time-badge pm-in" title="Afternoon In">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                    {{ record.afternoon_in|time:"h:i A" }}
+                                </span>
+                                {% endif %}
+                                
+                                {% if record.afternoon_out %}
+                                <span class="time-badge pm-out" title="Afternoon Out">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    {{ record.afternoon_out|time:"h:i A" }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Empty State for Filters (Hidden by default) -->
+            <div id="filter-empty-state" class="empty-state d-none-filter">
+                <div class="bg-light rounded-circle d-inline-flex p-4 mb-3">
+                    <i class="fas fa-filter text-muted mb-0" style="font-size: 32px;"></i>
+                </div>
+                <p class="text-dark">No records found for this session</p>
+                <small class="text-muted">Try selecting a different filter.</small>
+            </div>
+
+            {% else %}
+            <!-- Original Empty State (No records at all) -->
+            <div class="empty-state">
+                <div class="bg-light rounded-circle d-inline-flex p-4 mb-3">
+                    <i class="fas fa-user-clock text-muted mb-0" style="font-size: 32px;"></i>
+                </div>
+                <p class="text-dark">No attendance records found for today</p>
+                <small class="text-muted">As students tap their IDs, records will appear here.</small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function filterAttendance(type, element) {
+        const grid = document.getElementById('attendance-grid');
+        if (!grid) return; // Exit if no records exist at all
+
+        const cards = grid.getElementsByClassName('student-card');
+        const emptyState = document.getElementById('filter-empty-state');
+        const titleLabel = document.getElementById('attendance-list-title');
+        
+        // 1. Update UI Active State on Dashboard Cards
+        document.querySelectorAll('.dashboard-card.clickable').forEach(card => {
+            card.classList.remove('active-filter');
+        });
+        if(element) {
+            element.classList.add('active-filter');
+        }
+
+        // 2. Update Title
+        if (type === 'am') {
+            titleLabel.textContent = "Recent Attendance Records (AM Session)";
+        } else if (type === 'pm') {
+            titleLabel.textContent = "Recent Attendance Records (PM Session)";
+        } else {
+            titleLabel.textContent = "Recent Attendance Records";
+        }
+
+        // 3. Filter the cards AND specific time rows
+        let visibleCount = 0;
+
+        Array.from(cards).forEach(card => {
+            const hasAm = card.getAttribute('data-am') === 'true';
+            const hasPm = card.getAttribute('data-pm') === 'true';
+            
+            const amRow = card.querySelector('.am-session-row');
+            const pmRow = card.querySelector('.pm-session-row');
+
+            let shouldShowCard = false;
+
+            // Reset display on inner rows
+            if(amRow) amRow.style.display = 'flex';
+            if(pmRow) pmRow.style.display = 'flex';
+
+            if (type === 'all') {
+                shouldShowCard = true;
+            } else if (type === 'am' && hasAm) {
+                shouldShowCard = true;
+                if(pmRow) pmRow.style.display = 'none'; // Hide PM times
+            } else if (type === 'pm' && hasPm) {
+                shouldShowCard = true;
+                if(amRow) amRow.style.display = 'none'; // Hide AM times
+            }
+
+            if (shouldShowCard) {
+                card.classList.remove('d-none-filter');
+                visibleCount++;
+            } else {
+                card.classList.add('d-none-filter');
+            }
+        });
+
+        // 4. Toggle Empty State for Filters
+        if (visibleCount === 0) {
+            grid.style.display = 'none'; // Hide grid structure to collapse spacing
+            emptyState.classList.remove('d-none-filter');
+        } else {
+            grid.style.display = 'grid'; // Restore grid
+            emptyState.classList.add('d-none-filter');
+        }
+    }
+</script>
+{% endblock %}

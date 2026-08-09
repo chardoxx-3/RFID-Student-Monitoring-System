@@ -1,0 +1,1855 @@
+{% extends "attendance_app/admin/base.html" %}
+{% load static %}
+
+{% block page_title %}Students Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* --- Navy Theme Core Styles (Matched to Base) --- */
+    :root {
+        --primary-navy: #001f3f;       /* Deep Navy */
+        --secondary-navy: #003366;     /* Rich Navy */
+        --accent-blue: #3b82f6;        /* Bright Blue */
+        --text-muted: #64748b;
+        --bg-light: #f1f5f9;
+        --border-color: #e2e8f0;
+    }
+
+    /* Card Styling */
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid var(--border-color);
+        padding: 20px 24px;
+    }
+
+    .card-header h5 {
+        color: var(--primary-navy);
+        font-weight: 700;
+        margin: 0;
+    }
+
+    /* --- UPDATED TABLE STYLING --- */
+    
+    .table-responsive {
+        min-height: 400px; 
+        padding-bottom: 60px; /* Extra space at bottom */
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border: 1px solid var(--border-color);
+    }
+
+    .data-table th {
+        background-color: var(--primary-navy); 
+        color: #ffffff;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        padding: 16px;
+        border-bottom: 1px solid var(--border-color);
+        border-right: 1px solid rgba(255, 255, 255, 0.1); 
+    }
+
+    .data-table td {
+        padding: 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+        color: #334155;
+        border-right: 1px solid var(--border-color);
+    }
+
+    .data-table th:last-child, 
+    .data-table td:last-child {
+        border-right: none;
+    }
+
+    .data-table tr:hover td {
+        background-color: #f1f5f9;
+    }
+
+    /* Photo Styling */
+    .photo-cell {
+        width: 70px;
+    }
+
+    .photo-cell img {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 2px solid #fff;
+    }
+
+    .photo-cell .no-photo {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background-color: #f1f5f9;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    /* Button Styling */
+    .btn {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background-color: var(--accent-blue);
+        border-color: var(--accent-blue);
+    }
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+
+    /* Action Dropdown */
+    .btn-action-dropdown {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .btn-action-dropdown:hover, .show > .btn-action-dropdown {
+        background-color: var(--bg-light);
+        color: var(--primary-navy);
+        border-color: #cbd5e1;
+    }
+    .dropdown-menu {
+        border: none;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        padding: 8px;
+        z-index: 1050; 
+    }
+    .dropdown-item {
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        color: #475569;
+    }
+    .dropdown-item:hover {
+        background-color: #f1f5f9;
+        color: var(--primary-navy);
+    }
+    .dropdown-item.text-danger:hover {
+        background-color: #fef2f2;
+        color: #dc2626;
+    }
+
+    /* Forms & Inputs */
+    .input-group-text {
+        background-color: #fff;
+        border: 1px solid var(--border-color);
+        border-right: none;
+        color: #94a3b8;
+    }
+    
+    .form-control, .form-select {
+        border: 1px solid var(--border-color);
+        border-left: none;
+        padding: 10px 12px;
+        font-size: 0.95rem;
+        color: var(--primary-navy);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        box-shadow: none;
+        border-color: var(--accent-blue);
+    }
+    
+    .input-group:focus-within .input-group-text {
+        border-color: var(--accent-blue);
+        color: var(--accent-blue);
+    }
+
+    /* Filter Section */
+    .filter-section {
+        background-color: #f8fafc;
+        border-bottom: 1px solid var(--border-color);
+        padding: 20px 24px;
+    }
+
+    /* Pagination */
+    .page-link {
+        border: none;
+        color: #64748b;
+        border-radius: 8px;
+        margin: 0 2px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .page-item.active .page-link {
+        background-color: var(--accent-blue);
+        color: white;
+    }
+    
+    /* Upload Areas */
+    .file-upload-area {
+        border: 2px dashed var(--border-color);
+        border-radius: 12px;
+        transition: all 0.2s;
+    }
+    .file-upload-area:hover {
+        border-color: var(--accent-blue);
+        background-color: #eff6ff !important;
+    }
+
+    /* Badge Styles */
+    .badge-soft {
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.8em;
+    }
+    .badge-rfid {
+        background-color: #f1f5f9;
+        color: #475569;
+        font-family: monospace;
+        letter-spacing: 0.5px;
+        border: 1px solid var(--border-color);
+    }
+
+    /* Modal Tweaks */
+    .modal-content {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    .modal-header {
+        padding: 20px 24px;
+    }
+    .photo-upload-container {
+        position: relative;
+        display: inline-block;
+        transition: transform 0.2s;
+    }
+    .photo-upload-container:hover {
+        transform: scale(1.02);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+<!-- In the card-header section, add the Print button next to Export -->
+<div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+    <div class="d-flex align-items-center">
+        <h5 class="mb-0"><i class="fas fa-users me-2 text-primary"></i>Students Directory</h5>
+        <span class="badge bg-light text-dark ms-3 border">{{ students.paginator.count }} Total</span>
+    </div>
+    <div class="d-flex gap-2 flex-wrap justify-content-end">
+        <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#importStudentsModal">
+            <i class="fas fa-file-import me-1"></i> Import
+        </button>
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#exportStudentsModal">
+            <i class="fas fa-file-export me-1"></i> Export
+        </button>
+        <!-- Add Print Report Button -->
+        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#printStudentsModal">
+            <i class="fas fa-print me-1"></i> Print
+        </button>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+            <i class="fas fa-plus me-1"></i> Add Student
+        </button>
+        <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteAllStudentsModal">
+            <i class="fas fa-trash-alt"></i>
+        </button>
+    </div>
+</div>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <form method="get" class="row g-3" id="filterForm">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted">SEARCH</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" name="search" class="form-control" placeholder="Name or ID..." 
+                                   value="{{ request.GET.search }}" id="searchInput">
+                        </div>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">DEPARTMENT</label>
+                        <div class="input-group">
+                            <select name="institute" class="form-select" id="filterInstitute">
+                                <option value="">All Depts</option>
+                                {% for institute in all_institutes %}
+                                <option value="{{ institute.id }}" {% if request.GET.institute == institute.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ institute.code }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">PROGRAM</label>
+                        <div class="input-group">
+                            <select name="course" class="form-select" id="filterCourse">
+                                <option value="">All Programs</option>
+                                {% for course in all_courses %}
+                                <option value="{{ course.id }}" {% if request.GET.course == course.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ course.code }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">YEAR & SECTION</label>
+                        <div class="d-flex gap-1">
+                            <select name="year_level" class="form-select" id="filterYearLevel">
+                                <option value="">Yr</option>
+                                <option value="1" {% if request.GET.year_level == '1' %}selected{% endif %}>1</option>
+                                <option value="2" {% if request.GET.year_level == '2' %}selected{% endif %}>2</option>
+                                <option value="3" {% if request.GET.year_level == '3' %}selected{% endif %}>3</option>
+                                <option value="4" {% if request.GET.year_level == '4' %}selected{% endif %}>4</option>
+                            </select>
+                            <select name="section" class="form-select" id="filterSection">
+                                <option value="">Sec</option>
+                                {% for section in all_sections %}
+                                <option value="{{ section.id }}" {% if request.GET.section == section.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ section.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+<!-- Replace the existing sort dropdown in the filter section -->
+<div class="col-md-3 d-flex align-items-end gap-2">
+    <div class="flex-grow-1">
+        <label class="form-label small fw-bold text-muted">SORT</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-sort"></i></span>
+            <select name="sort" class="form-select" id="filterSort">
+                <option value="name_asc" {% if request.GET.sort == 'name_asc' or not request.GET.sort %}selected{% endif %}>Name (A-Z)</option>
+                <option value="name_desc" {% if request.GET.sort == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
+                <option value="date_created_desc" {% if request.GET.sort == 'date_created_desc' %}selected{% endif %}>Date Created (Newest)</option>
+                <option value="date_created_asc" {% if request.GET.sort == 'date_created_asc' %}selected{% endif %}>Date Created (Oldest)</option>
+                <option value="date_modified_desc" {% if request.GET.sort == 'date_modified_desc' %}selected{% endif %}>Date Modified (Newest)</option>
+                <option value="date_modified_asc" {% if request.GET.sort == 'date_modified_asc' %}selected{% endif %}>Date Modified (Oldest)</option>
+            </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary" id="searchButton" title="Search">
+        <i class="fas fa-arrow-right"></i>
+    </button>
+    <button type="button" class="btn btn-light border" id="resetButton" title="Reset Filters">
+        <i class="fas fa-undo"></i>
+    </button>
+</div>
+                </form>
+            </div>
+
+            <!-- Import Errors Debug Section -->
+            {% if request.session.import_errors %}
+            <div class="p-3">
+                <div class="alert alert-warning border-0 shadow-sm rounded-3">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-exclamation-triangle fa-lg me-3"></i>
+                        <div>
+                            <h6 class="alert-heading fw-bold mb-0">Import Issues Detected</h6>
+                            <small>{{ request.session.import_errors|length }} record(s) could not be imported.</small>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded p-3 mb-3" style="max-height: 200px; overflow-y: auto;">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tbody>
+                                {% for error in request.session.import_errors %}
+                                <tr class="border-bottom">
+                                    <td width="80"><span class="badge bg-danger-subtle text-danger">Row {{ forloop.counter|add:1 }}</span></td>
+                                    <td class="text-muted small">{{ error }}</td>
+                                    <td width="50" class="text-end">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'export_students' %}" class="btn btn-sm btn-light border"><i class="fas fa-download me-1"></i> Template</a>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="clearErrorsBtn">Dismiss</button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Table Section -->
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th class="photo-cell"></th>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Dept</th>
+                                <th>Program</th>
+                                <th>Year</th>
+                                <th>Section</th>
+                                <th>RFID Tag</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td class="photo-cell">
+                                    {% if student.photo %}
+                                    <img src="{{ student.photo.url }}" alt="{{ student.first_name }}">
+                                    {% else %}
+                                    <div class="no-photo"><i class="fas fa-user"></i></div>
+                                    {% endif %}
+                                </td>
+                                <td class="fw-medium text-dark">{{ student.student_id }}</td>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ student.last_name }}, {{ student.first_name }}</div>
+                                    <small class="text-muted">{{ student.email|default:"" }}</small>
+                                </td>
+                                <td><span>{{ student.section.course.institute.code }}</span></td>
+                                <td>{{ student.section.course.code }}</td>
+                                <td>{{ student.get_year_level_display }}</td>
+                                <td>{{ student.section.name }}</td>
+                                <td>
+                                    {% if student.rfid_tag %}
+                                        <span class="badge badge-rfid">{{ student.rfid_tag }}</span>
+                                    {% else %}
+                                        <span class="text-muted small fs-italic">No Tag</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="dropdown">
+                                        <button class="btn btn-action-dropdown dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="#" data-bs-toggle="modal" 
+                                                   data-bs-target="#viewStudentModal" 
+                                                   data-id="{{ student.id }}"
+                                                   data-photo="{% if student.photo %}{{ student.photo.url }}{% else %}{% static 'attendance_app/img/placeholder.jpg' %}{% endif %}"
+                                                   data-student-id="{{ student.student_id }}"
+                                                   data-rfid-tag="{{ student.rfid_tag|default:'Not assigned' }}"
+                                                   data-first-name="{{ student.first_name }}"
+                                                   data-last-name="{{ student.last_name }}"
+                                                   data-birthday="{{ student.birthday|date:'Y-m-d' }}"
+                                                   data-gender="{{ student.gender }}"
+                                                   data-year-level="{{ student.year_level }}"
+                                                   data-section="{{ student.section.id }}"
+                                                   data-email="{{ student.email }}"
+                                                   data-address="{{ student.address }}"
+                                                   data-guardian="{{ student.guardian_name }}"
+                                                   data-guardian-email="{{ student.guardian_email }}">
+                                                    <i class="fas fa-eye me-2 text-primary"></i> View Details
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="#" data-bs-toggle="modal" 
+                                                   data-bs-target="#editStudentModal" 
+                                                   data-id="{{ student.id }}"
+                                                   data-photo="{% if student.photo %}{{ student.photo.url }}{% else %}{% static 'attendance_app/img/placeholder.jpg' %}{% endif %}"
+                                                   data-student-id="{{ student.student_id }}"
+                                                   data-rfid-tag="{{ student.rfid_tag|default:'' }}"
+                                                   data-first-name="{{ student.first_name }}"
+                                                   data-last-name="{{ student.last_name }}"
+                                                   data-birthday="{{ student.birthday|date:'Y-m-d' }}"
+                                                   data-gender="{{ student.gender }}"
+                                                   data-year-level="{{ student.year_level }}"
+                                                   data-section="{{ student.section.id }}"
+                                                   data-email="{{ student.email }}"
+                                                   data-address="{{ student.address }}"
+                                                   data-guardian="{{ student.guardian_name }}"
+                                                   data-guardian-email="{{ student.guardian_email }}">
+                                                    <i class="fas fa-edit me-2 text-warning"></i> Edit Profile
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" 
+                                                   data-bs-target="#deleteStudentModal" 
+                                                   data-id="{{ student.id }}"
+                                                   data-name="{{ student.last_name }}, {{ student.first_name }}">
+                                                    <i class="fas fa-trash me-2"></i> Delete Student
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="far fa-folder-open fa-3x mb-3 opacity-50"></i>
+                                        <p class="mb-0">No students found matching your filters.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if students.has_other_pages %}
+                <div class="d-flex justify-content-center py-3 border-top">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination mb-0">
+                            {% if students.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year_level %}&year_level={{ request.GET.year_level }}{% endif %}{% if request.GET.section %}&section={{ request.GET.section }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">&laquo;</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ students.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year_level %}&year_level={{ request.GET.year_level }}{% endif %}{% if request.GET.section %}&section={{ request.GET.section }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">‹</a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in students.paginator.page_range %}
+                                {% if students.number == num %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                                {% elif num > students.number|add:'-3' and num < students.number|add:'3' %}
+                                <li class="page-item"><a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year_level %}&year_level={{ request.GET.year_level }}{% endif %}{% if request.GET.section %}&section={{ request.GET.section }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">{{ num }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if students.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ students.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year_level %}&year_level={{ request.GET.year_level }}{% endif %}{% if request.GET.section %}&section={{ request.GET.section }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">›</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ students.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.year_level %}&year_level={{ request.GET.year_level }}{% endif %}{% if request.GET.section %}&section={{ request.GET.section }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">&raquo;</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1" aria-labelledby="addStudentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-white border-bottom">
+                <h5 class="modal-title fw-bold text-primary" id="addStudentModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>Add New Student
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'add_student' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body p-0">
+                    <div class="row g-0">
+                        <!-- Left Side: Photo & Basic Info -->
+                        <div class="col-md-4 bg-light p-4 border-end">
+                            <div class="text-center mb-4">
+                                <div class="photo-upload-container position-relative d-inline-block">
+                                    <img id="studentPhotoPreview" src="{% static 'attendance_app/img/placeholder.png' %}" 
+                                         class="rounded-circle shadow-sm border border-4 border-white mb-3" 
+                                         style="width: 160px; height: 160px; object-fit: cover; background-color: #e2e8f0;">
+                                    <div class="position-absolute bottom-0 end-0">
+                                        <button type="button" class="btn btn-primary btn-sm rounded-circle shadow" 
+                                                onclick="document.getElementById('photoUpload').click()" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-camera"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <input type="file" id="photoUpload" name="photo" accept="image/*" 
+                                       style="display: none;" onchange="previewPhoto(this)">
+                                <div class="text-muted small mt-2 fw-medium">Upload Student Photo</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="student_id" class="form-label fw-bold small text-muted">STUDENT ID <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                    <input type="text" class="form-control" id="student_id" name="student_id" 
+                                           placeholder="e.g. 2023-0001" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="rfid_tag" class="form-label fw-bold small text-muted">RFID TAG</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-wifi"></i></span>
+                                    <input type="text" class="form-control" id="rfid_tag" name="rfid_tag"
+                                           placeholder="Scan tag or enter ID">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Side: Form Fields -->
+                        <div class="col-md-8 p-4">
+                            <!-- Personal Info -->
+                            <div class="mb-4">
+                                <h6 class="text-primary fw-bold mb-3 d-flex align-items-center">
+                                    <span class="bg-primary-subtle text-primary rounded p-1 me-2"><i class="fas fa-user"></i></span>
+                                    Personal Information
+                                </h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label small">First Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="Enter first name" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label small">Last Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Enter last name" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="birthday" class="form-label small">Birthday</label>
+                                        <input type="date" class="form-control" id="birthday" name="birthday" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="gender" class="form-label small">Gender</label>
+                                        <select class="form-select" id="gender" name="gender" required>
+                                            <option value="" selected disabled>Select...</option>
+                                            <option value="M">Male</option>
+                                            <option value="F">Female</option>
+                                            <option value="O">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Academic Info -->
+                            <div class="mb-4">
+                                <h6 class="text-primary fw-bold mb-3 d-flex align-items-center">
+                                    <span class="bg-primary-subtle text-primary rounded p-1 me-2"><i class="fas fa-graduation-cap"></i></span>
+                                    Academic Details
+                                </h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="institute" class="form-label small">Department <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="institute" name="institute" required>
+                                            <option value="" selected disabled>Select Department</option>
+                                            {% for institute in all_institutes %}
+                                            <option value="{{ institute.id }}">{{ institute.code }} - {{ institute.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="course" class="form-label small">Program <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="course" name="course" required disabled>
+                                            <option value="" selected disabled>Select Program</option>
+                                            {% for course in all_courses %}
+                                            <option value="{{ course.id }}" data-institute="{{ course.institute.id }}">
+                                                {{ course.code }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="year_level" class="form-label small">Year Level <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="year_level" name="year_level" required disabled>
+                                            <option value="" selected disabled>Select...</option>
+                                            <option value="1">First Year</option>
+                                            <option value="2">Second Year</option>
+                                            <option value="3">Third Year</option>
+                                            <option value="4">Fourth Year</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="section" class="form-label small">Section <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="section" name="section" required disabled>
+                                            <option value="" selected disabled>Select...</option>
+                                            {% for section in all_sections %}
+                                            <option value="{{ section.id }}" data-course="{{ section.course.id }}" data-year="{{ section.year_level }}">
+                                                {{ section.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Contact & Guardian (Collapsed/Compact) -->
+                            <div>
+                                <h6 class="text-primary fw-bold mb-3 d-flex align-items-center">
+                                    <span class="bg-primary-subtle text-primary rounded p-1 me-2"><i class="fas fa-address-book"></i></span>
+                                    Contact & Guardian
+                                </h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="student_email" class="form-label small">Student Email <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control" id="email" name="email" placeholder="Enter student email" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="address" class="form-label small">Adress <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="address" name="address" placeholder="Enter Address" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="guardian_name" class="form-label small">Guadian Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="guardian_name" name="guardian_name" placeholder="Enter guardian name" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="guardian_email" class="form-label small">Guardian Email <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control" id="guardian_email" name="guardian_email" placeholder="Enter guardian email">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4"><i class="fas fa-check me-2"></i>Save Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Camera Modal -->
+<div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cameraModalLabel">Take Student Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="bg-dark rounded mb-3 overflow-hidden d-flex align-items-center justify-content-center" style="height: 300px;">
+                    <video id="cameraPreview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                    <canvas id="photoCanvas" style="display: none;"></canvas>
+                </div>
+                <div class="d-flex justify-content-center gap-2">
+                    <button id="captureBtn" class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-camera me-2"></i> Capture
+                    </button>
+                    <button id="retakeBtn" class="btn btn-light border rounded-pill px-4" style="display: none;">
+                        <i class="fas fa-redo me-2"></i> Retake
+                    </button>
+                    <button id="usePhotoBtn" class="btn btn-success rounded-pill px-4" style="display: none;">
+                        <i class="fas fa-check me-2"></i> Use Photo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Camera Modal -->
+<div class="modal fade" id="editCameraModal" tabindex="-1" aria-labelledby="editCameraModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCameraModalLabel">Take Student Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="bg-dark rounded mb-3 overflow-hidden d-flex align-items-center justify-content-center" style="height: 300px;">
+                    <video id="editCameraPreview" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+                    <canvas id="editPhotoCanvas" style="display: none;"></canvas>
+                </div>
+                <div class="d-flex justify-content-center gap-2">
+                    <button id="editCaptureBtn" class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-camera me-2"></i> Capture
+                    </button>
+                    <button id="editRetakeBtn" class="btn btn-light border rounded-pill px-4" style="display: none;">
+                        <i class="fas fa-redo me-2"></i> Retake
+                    </button>
+                    <button id="editUsePhotoBtn" class="btn btn-success rounded-pill px-4" style="display: none;">
+                        <i class="fas fa-check me-2"></i> Use Photo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Student Modal -->
+<div class="modal fade" id="viewStudentModal" tabindex="-1" aria-labelledby="viewStudentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-white border-bottom">
+                <h5 class="modal-title fw-bold text-primary" id="viewStudentModalLabel">Student Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="row g-0">
+                    <div class="col-md-4 bg-light p-4 text-center border-end d-flex flex-column align-items-center justify-content-center">
+                        <img id="viewStudentPhotoPreview" src="" 
+                             class="rounded-circle shadow border border-4 border-white mb-3" 
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                        
+                        <h5 class="fw-bold mb-1" id="viewStudentName"></h5>
+                        <div class="badge bg-primary mb-3" id="view_student_id"></div>
+                        
+                        <div class="card bg-white border-0 shadow-sm w-100 mb-2">
+                            <div class="card-body p-2">
+                                <small class="text-muted d-block">RFID TAG</small>
+                                <span class="fw-mono fw-bold text-dark" id="view_rfid_tag"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8 p-4">
+                        <h6 class="text-uppercase text-muted fw-bold small mb-3">Academic Info</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <small class="text-muted d-block">Department</small>
+                                <span class="fw-medium" id="view_institute"></span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Program</small>
+                                <span class="fw-medium" id="view_course"></span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Year Level</small>
+                                <span class="fw-medium" id="view_year_level"></span>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Section</small>
+                                <span class="fw-medium" id="view_section"></span>
+                            </div>
+                        </div>
+                        
+                        <h6 class="text-uppercase text-muted fw-bold small mb-3 border-top pt-3">Personal Details</h6>
+                        <div class="row g-3 mb-4">
+                             <div class="col-4">
+                                <small class="text-muted d-block">Gender</small>
+                                <span class="fw-medium" id="view_gender"></span>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted d-block">Birthday</small>
+                                <span class="fw-medium" id="view_birthday"></span>
+                            </div>
+                             <div class="col-12">
+                                <small class="text-muted d-block">Address</small>
+                                <span class="fw-medium" id="view_address"></span>
+                            </div>
+                        </div>
+                        
+                         <h6 class="text-uppercase text-muted fw-bold small mb-3 border-top pt-3">Guardian</h6>
+                         <div class="row g-3">
+                             <div class="col-6">
+                                 <small class="text-muted d-block">Name</small>
+                                 <span class="fw-medium" id="view_guardian_name"></span>
+                             </div>
+                             <div class="col-6">
+                                 <small class="text-muted d-block">Email</small>
+                                 <span class="fw-medium" id="view_guardian_email"></span>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Student Modal (Same structure as Add, but with Edit IDs) -->
+<div class="modal fade" id="editStudentModal" tabindex="-1" aria-labelledby="editStudentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-white border-bottom">
+                <h5 class="modal-title fw-bold text-primary" id="editStudentModalLabel">
+                    <i class="fas fa-user-edit me-2"></i>Edit Student
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'edit_student' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" id="edit_student_db_id" name="student_db_id">
+                <div class="modal-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-4 bg-light p-4 border-end">
+                            <div class="text-center mb-4">
+                                <div class="photo-upload-container position-relative d-inline-block">
+                                    <img id="editStudentPhotoPreview" src="" 
+                                         class="rounded-circle shadow-sm border border-4 border-white mb-3" 
+                                         style="width: 160px; height: 160px; object-fit: cover; background-color: #e2e8f0;">
+                                    <div class="position-absolute bottom-0 end-0">
+                                        <button type="button" class="btn btn-primary btn-sm rounded-circle shadow" 
+                                                onclick="document.getElementById('editPhotoUpload').click()" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-camera"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <input type="file" id="editPhotoUpload" name="photo" accept="image/*" 
+                                       style="display: none;" onchange="previewEditPhoto(this)">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="edit_student_id_field" class="form-label fw-bold small text-muted">STUDENT ID</label>
+                                <input type="text" class="form-control" id="edit_student_id_field" name="student_id" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="edit_rfid_tag" class="form-label fw-bold small text-muted">RFID TAG</label>
+                                <input type="text" class="form-control" id="edit_rfid_tag" name="rfid_tag">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-8 p-4">
+                             <!-- Reuse layout from Add Modal, changing IDs to edit_ prefix -->
+                             <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small">First Name</label>
+                                    <input type="text" class="form-control" id="edit_first_name" name="first_name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Last Name</label>
+                                    <input type="text" class="form-control" id="edit_last_name" name="last_name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Birthday</label>
+                                    <input type="date" class="form-control" id="edit_birthday" name="birthday" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Gender</label>
+                                    <select class="form-select" id="edit_gender" name="gender" required>
+                                        <option value="M">Male</option>
+                                        <option value="F">Female</option>
+                                        <option value="O">Other</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-12 mt-3"><h6 class="text-primary fw-bold small border-bottom pb-2">Academic</h6></div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label small">Department</label>
+                                    <select class="form-select" id="edit_institute" name="institute" required>
+                                        <option value="" selected disabled>Select...</option>
+                                        {% for institute in all_institutes %}
+                                        <option value="{{ institute.id }}">{{ institute.code }} - {{ institute.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Program</label>
+                                    <select class="form-select" id="edit_course" name="course" required disabled>
+                                        <option value="" selected disabled>Select...</option>
+                                        {% for course in all_courses %}
+                                        <option value="{{ course.id }}" data-institute="{{ course.institute.id }}">
+                                            {{ course.code }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Year Level</label>
+                                    <select class="form-select" id="edit_year_level" name="year_level" required>
+                                        <option value="1">First Year</option>
+                                        <option value="2">Second Year</option>
+                                        <option value="3">Third Year</option>
+                                        <option value="4">Fourth Year</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Section</label>
+                                    <select class="form-select" id="edit_section" name="section" required>
+                                        <option value="" selected disabled>Select...</option>
+                                        {% for section in all_sections %}
+                                        <option value="{{ section.id }}" data-course="{{ section.course.id }}" data-year="{{ section.year_level }}">
+                                            {{ section.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-12 mt-3"><h6 class="text-primary fw-bold small border-bottom pb-2">Contact & Guardian</h6></div>
+                                
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label small">Student Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="edit_email" name="email" placeholder="Email" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="address" class="form-label small">Address <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="edit_address" name="address" placeholder="Address" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="guardian_name" class="form-label small">Guardian Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="edit_guardian_name" name="guardian_name" placeholder="Guardian Name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="guardian_email" class="form-label small">Guardian Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="edit_guardian_email" name="guardian_email" placeholder="Guardian Email" required>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4"><i class="fas fa-save me-2"></i>Update Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Import Students Modal -->
+<div class="modal fade" id="importStudentsModal" tabindex="-1" aria-labelledby="importStudentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold" id="importStudentsModalLabel">
+                    <h5 class="modal-title text-white"><i class="fas fa-file-excel me-2"></i>Import Students</h5>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'import_students' %}" enctype="multipart/form-data" id="importForm">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="file-upload-area p-5 text-center mb-4">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-success mb-3"></i>
+                        <h6 class="fw-bold">Drag & Drop Excel File</h6>
+                        <p class="text-muted small mb-3">Supported formats: .xlsx, .xls</p>
+                        <input type="file" class="d-none" id="excel_file" name="excel_file" accept=".xlsx,.xls" required>
+                        <button type="button" class="btn btn-success px-4 rounded-pill" onclick="document.getElementById('excel_file').click()">
+                            Browse Files
+                        </button>
+                        <div class="mt-3 fw-bold text-success" id="file-name"></div>
+                    </div>
+                    
+                    <div class="form-check form-switch mb-3 bg-light p-3 rounded">
+                        <input class="form-check-input" type="checkbox" id="update_existing" name="update_existing">
+                        <label class="form-check-label fw-medium" for="update_existing">
+                            Update existing students (overwrite by Student ID)
+                        </label>
+                    </div>
+
+                    <div class="alert alert-info border-0 bg-blue-50 text-dark small">
+                        <strong><i class="fas fa-info-circle me-1"></i> Format Requirements:</strong>
+                        Columns must include: student_id, rfid_tag, first_name, last_name, birthday (YYYY-MM-DD), gender, year_level, department, program, section, email, address, guardian name, guardian_email.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success px-4" id="importSubmitBtn">Import Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Export Students Modal -->
+<div class="modal fade" id="exportStudentsModal" tabindex="-1" aria-labelledby="exportStudentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="exportStudentsModalLabel">
+                    <h5 class="modal-title text-white"><i class="fas fa-file-export me-2"></i>Export Data</h5>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="get" action="{% url 'export_students' %}" id="exportForm">
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-4">Select criteria to filter the data you wish to export. Leave blank to export all.</p>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Department</label>
+                            <select name="institute" class="form-select" id="export_institute">
+                                <option value="">All Departments</option>
+                                {% for institute in all_institutes %}
+                                <option value="{{ institute.id }}">{{ institute.code }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Program</label>
+                            <select name="course" class="form-select" id="export_course" disabled>
+                                <option value="">All Programs</option>
+                                {% for course in all_courses %}
+                                <option value="{{ course.id }}" data-institute="{{ course.institute.id }}">{{ course.code }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Year Level</label>
+                            <select name="year_level" class="form-select" id="export_year_level">
+                                <option value="">All Levels</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Section</label>
+                            <select name="section" class="form-select" id="export_section" disabled>
+                                <option value="">All Sections</option>
+                                {% for section in all_sections %}
+                                <option value="{{ section.id }}" data-course="{{ section.course.id }}" data-year="{{ section.year_level }}">
+                                    {{ section.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                             <label class="form-label small fw-bold">Search Term</label>
+                             <input type="text" name="search" class="form-control" id="export_search" placeholder="Filter by name or ID...">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success px-4"><i class="fas fa-file-excel me-2"></i>Download Excel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteStudentModal" tabindex="-1" aria-labelledby="deleteStudentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title text-white" id="deleteStudentModalLabel"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="avatar-lg bg-danger-subtle text-danger rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                    <i class="fas fa-trash-alt fa-2x"></i>
+                </div>
+                <p class="mb-1">Are you sure you want to delete <strong class="text-dark" id="studentToDeleteName"></strong>?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer bg-light border-0 justify-content-center">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteStudentForm" method="post" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger px-4">Yes, Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete All Modal -->
+<div class="modal fade" id="deleteAllStudentsModal" tabindex="-1" aria-labelledby="deleteAllStudentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title text-white modal-title"><i class="fas fa-skull-crossbones me-2"></i>Mass Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-danger d-flex align-items-center mb-4">
+                    <i class="fas fa-exclamation-circle fa-2x me-3"></i>
+                    <div>
+                        <strong>Warning: Critical Action</strong><br>
+                        This will permanently delete <u>ALL</u> student records in the system.
+                    </div>
+                </div>
+                <div class="form-check bg-light p-3 rounded border">
+                    <input class="form-check-input" type="checkbox" id="confirmDeleteAll">
+                    <label class="form-check-label fw-bold text-danger" for="confirmDeleteAll">
+                        I understand that this action is irreversible.
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteAllStudentsForm" method="post" action="{% url 'delete_all_students' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger px-4" id="deleteAllButton" disabled>
+                        <i class="fas fa-trash-alt me-2"></i>Delete Everything
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Students Modal -->
+<div class="modal fade" id="printStudentsModal" tabindex="-1" aria-labelledby="printStudentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold text-white" id="printStudentsModalLabel">
+                    <i class="fas fa-print me-2"></i>Generate Student Report
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <!-- Action points to new print_students_report view, target="_blank" opens new tab -->
+            <form method="get" action="{% url 'print_students_report' %}" id="printStudentsForm" target="_blank">
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-4">Select filters to generate the printable student report.</p>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Department</label>
+                            <select name="institute" class="form-select" id="print_institute">
+                                <option value="">All Departments</option>
+                                {% for institute in all_institutes %}
+                                <option value="{{ institute.id }}">{{ institute.code }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Program</label>
+                            <select name="course" class="form-select" id="print_course" disabled>
+                                <option value="">All Programs</option>
+                                {% for course in all_courses %}
+                                <option value="{{ course.id }}" data-institute="{{ course.institute.id }}">{{ course.code }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Year Level</label>
+                            <select name="year_level" class="form-select" id="print_year_level">
+                                <option value="">All Levels</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Section</label>
+                            <select name="section" class="form-select" id="print_section" disabled>
+                                <option value="">All Sections</option>
+                                {% for section in all_sections %}
+                                <option value="{{ section.id }}" data-course="{{ section.course.id }}" data-year="{{ section.year_level }}">
+                                    {{ section.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">Search Term</label>
+                            <input type="text" name="search" class="form-control" id="print_search" placeholder="Filter by name or ID...">
+                        </div>
+<!-- In the Print Students Modal, update the sort select -->
+<div class="col-12">
+    <label class="form-label small fw-bold">Sort By</label>
+    <select name="sort" class="form-select" id="print_sort">
+        <option value="name_asc">Name (A-Z)</option>
+        <option value="name_desc">Name (Z-A)</option>
+        <option value="date_created_desc">Date Created (Newest First)</option>
+        <option value="date_created_asc">Date Created (Oldest First)</option>
+        <option value="date_modified_desc">Date Modified (Newest First)</option>
+        <option value="date_modified_asc">Date Modified (Oldest First)</option>
+    </select>
+</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fas fa-file-alt me-2"></i> Generate Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'attendance_app/js/camera.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Helper function to trigger the loading screen defined in base.html
+    function triggerGlobalLoading() {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+            loadingScreen.style.display = 'flex';
+            setTimeout(() => {
+                loadingScreen.style.opacity = '1';
+            }, 10);
+        }
+    }
+    
+    // Helper function to hide the base loading screen manually if needed
+    function hideGlobalLoading() {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500);
+        }
+    }
+
+    // Import Errors Debug Functions
+    window.copyErrorToClipboard = function(errorText) {
+        navigator.clipboard.writeText(errorText).then(function() {
+            // Show temporary success message
+            const btn = event.target.closest('button');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i>';
+            btn.classList.add('text-success');
+            
+            setTimeout(function() {
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('text-success');
+            }, 2000);
+        }).catch(function(err) {
+            console.error('Failed to copy: ', err);
+            alert('Failed to copy error message');
+        });
+    }
+
+    // Clear errors button handler
+    $('#clearErrorsBtn').on('click', function() {
+        triggerGlobalLoading(); // Trigger base loader
+        
+        fetch('{% url "clear_import_errors" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Loader persists until reload finishes
+            } else {
+                hideGlobalLoading(); // Manually hide if we don't reload
+                alert('Failed to clear errors');
+            }
+        })
+        .catch(error => {
+            hideGlobalLoading();
+            console.error('Error:', error);
+            alert('Failed to clear errors');
+        });
+    });
+
+    // Auto-scroll to errors if they exist
+    setTimeout(function() {
+        var errorCard = $('.alert-warning');
+        if (errorCard.length) {
+            $('html, body').animate({
+                scrollTop: errorCard.offset().top - 20
+            }, 1000);
+        }
+    }, 500);
+    
+    // Filter Form Submission Handler
+    $('#filterForm').on('submit', function(e) {
+        e.preventDefault();
+        submitFilterForm();
+    });
+    
+    // Reset Button Handler
+    $('#resetButton').on('click', function() {
+        resetFilterForm();
+    });
+    
+    function submitFilterForm() {
+        triggerGlobalLoading(); // Trigger base loader manually for this AJAX-like reload
+        
+        var url = window.location.pathname;
+        var params = $('#filterForm').serialize();
+        
+        // Update URL and reload
+        window.location.href = url + '?' + params;
+    }
+    
+    function resetFilterForm() {
+        triggerGlobalLoading();
+        
+        $('#filterForm')[0].reset();
+        
+        setTimeout(() => {
+            var url = window.location.pathname;
+            window.location.href = url;
+        }, 100);
+    }
+    
+    // Enter key support in search field
+    $('#searchInput').on('keypress', function(e) {
+        if (e.which === 13) { 
+            e.preventDefault();
+            submitFilterForm();
+        }
+    });
+    
+    // NOTE: All other forms (Add, Edit, Delete, Import) do not need explicit 
+    // .on('submit') handlers here because base.html has a global listener that 
+    // attaches the loading screen to all <form> elements automatically.
+    
+    // View Student Modal Handler
+    $('#viewStudentModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var modal = $(this);
+        
+        modal.find('#viewStudentPhotoPreview').attr('src', button.data('photo'));
+        modal.find('#viewStudentName').text(button.data('first-name') + ' ' + button.data('last-name'));
+        modal.find('#view_student_id').text(button.data('student-id'));
+        modal.find('#view_rfid_tag').text(button.data('rfid-tag') || 'Not assigned');
+        
+        modal.find('#view_first_name').text(button.data('first-name'));
+        modal.find('#view_last_name').text(button.data('last-name'));
+        modal.find('#view_birthday').text(button.data('birthday') || 'Not specified');
+        
+        var genderText = 'Not specified';
+        switch(button.data('gender')) {
+            case 'M': genderText = 'Male'; break;
+            case 'F': genderText = 'Female'; break;
+            case 'O': genderText = 'Other'; break;
+        }
+        modal.find('#view_gender').text(genderText);
+        
+        // Get academic information via linked selects
+        var sectionId = button.data('section');
+        var sectionOption = $('#section option[value="' + sectionId + '"]');
+        var sectionName = sectionOption.text() || 'Not specified';
+        
+        var courseId = sectionOption.data('course');
+        var courseOption = $('#course option[value="' + courseId + '"]');
+        var courseName = courseOption.text() || 'Not specified';
+        
+        var instituteId = courseOption.data('institute');
+        var instituteOption = $('#institute option[value="' + instituteId + '"]');
+        var instituteName = instituteOption.text() || 'Not specified';
+        
+        var yearLevelNum = parseInt(button.data('year-level'));
+        var yearLevel = 'Not specified';
+        switch(yearLevelNum) {
+            case 1: yearLevel = 'First Year'; break;
+            case 2: yearLevel = 'Second Year'; break;
+            case 3: yearLevel = 'Third Year'; break;
+            case 4: yearLevel = 'Fourth Year'; break;
+        }
+        
+        modal.find('#view_institute').text(instituteName);
+        modal.find('#view_course').text(courseName);
+        modal.find('#view_year_level').text(yearLevel);
+        modal.find('#view_section').text(sectionName);
+        
+        modal.find('#view_email').text(button.data('email') || 'Not specified');
+        modal.find('#view_address').text(button.data('address') || 'Not specified');
+        modal.find('#view_guardian_name').text(button.data('guardian') || 'Not specified');
+        modal.find('#view_guardian_email').text(button.data('guardian-email') || 'Not specified');
+    });
+    
+    // Add Student Modal - Hierarchy Logic
+    $('#institute').change(function() {
+        const instituteId = $(this).val();
+        const courseSelect = $('#course');
+        const yearLevelSelect = $('#year_level');
+        const sectionSelect = $('#section');
+        
+        if (instituteId) {
+            courseSelect.prop('disabled', false);
+            courseSelect.find('option').each(function() {
+                const courseInstitute = $(this).data('institute');
+                if (courseInstitute == instituteId) {
+                    $(this).show().prop('disabled', false);
+                } else {
+                    $(this).hide().prop('disabled', true);
+                }
+            });
+            courseSelect.val('');
+            yearLevelSelect.prop('disabled', true).val('');
+            sectionSelect.prop('disabled', true).val('');
+        } else {
+            courseSelect.prop('disabled', true).val('');
+            yearLevelSelect.prop('disabled', true).val('');
+            sectionSelect.prop('disabled', true).val('');
+        }
+    });
+
+    $('#course').change(function() {
+        const courseId = $(this).val();
+        if (courseId) {
+            $('#year_level').prop('disabled', false).val('');
+            $('#section').prop('disabled', true).val('');
+        } else {
+            $('#year_level').prop('disabled', true).val('');
+            $('#section').prop('disabled', true).val('');
+        }
+    });
+
+    $('#year_level').change(function() {
+        const yearLevel = $(this).val();
+        const courseId = $('#course').val();
+        
+        if (yearLevel && courseId) {
+            $('#section').find('option').each(function() {
+                const sectionCourse = $(this).data('course');
+                const sectionYear = $(this).data('year');
+                
+                if (sectionCourse == courseId && sectionYear == yearLevel) {
+                    $(this).show().prop('disabled', false);
+                } else {
+                    $(this).hide().prop('disabled', true);
+                }
+            });
+            $('#section').prop('disabled', false).val('');
+        } else {
+            $('#section').prop('disabled', true).val('');
+        }
+    });
+
+    // Edit Student Modal - Hierarchy Logic
+    $('#edit_institute').change(function() {
+        const instituteId = $(this).val();
+        const courseSelect = $('#edit_course');
+        const yearLevelSelect = $('#edit_year_level');
+        const sectionSelect = $('#edit_section');
+        
+        if (instituteId) {
+            courseSelect.prop('disabled', false);
+            courseSelect.find('option').each(function() {
+                const courseInstitute = $(this).data('institute');
+                if (courseInstitute == instituteId) {
+                    $(this).show().prop('disabled', false);
+                } else {
+                    $(this).hide().prop('disabled', true);
+                }
+            });
+            courseSelect.val('');
+            yearLevelSelect.prop('disabled', true).val('');
+            sectionSelect.prop('disabled', true).val('');
+        } else {
+            courseSelect.prop('disabled', true).val('');
+            yearLevelSelect.prop('disabled', true).val('');
+            sectionSelect.prop('disabled', true).val('');
+        }
+    });
+
+    $('#edit_course').change(function() {
+        const courseId = $(this).val();
+        if (courseId) {
+            $('#edit_year_level').prop('disabled', false);
+        } else {
+            $('#edit_year_level').prop('disabled', true);
+            $('#edit_section').prop('disabled', true);
+        }
+        filterEditSections();
+    });
+
+    $('#edit_year_level').change(function() {
+        filterEditSections();
+    });
+
+    function filterEditSections() {
+        const yearLevel = $('#edit_year_level').val();
+        const courseId = $('#edit_course').val();
+        
+        if (yearLevel && courseId) {
+            $('#edit_section').find('option').each(function() {
+                const sectionCourse = $(this).data('course');
+                const sectionYear = $(this).data('year');
+                
+                if (sectionCourse == courseId && sectionYear == yearLevel) {
+                    $(this).show().prop('disabled', false);
+                } else {
+                    $(this).hide().prop('disabled', true);
+                }
+            });
+            $('#edit_section').prop('disabled', false);
+        } else {
+            $('#edit_section').prop('disabled', true);
+        }
+    }
+
+    // Edit Student Modal Handler (Pre-population)
+    $('#editStudentModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var modal = $(this);
+        
+        modal.find('#edit_student_db_id').val(button.data('id'));
+        modal.find('#editStudentPhotoPreview').attr('src', button.data('photo'));
+        modal.find('#edit_student_id_field').val(button.data('student-id'));
+        modal.find('#edit_rfid_tag').val(button.data('rfid-tag'));
+        modal.find('#edit_first_name').val(button.data('first-name'));
+        modal.find('#edit_last_name').val(button.data('last-name'));
+        modal.find('#edit_birthday').val(button.data('birthday'));
+        modal.find('#edit_gender').val(button.data('gender'));
+        
+        var sectionId = button.data('section');
+        var sectionOption = $('#edit_section option[value="' + sectionId + '"]');
+        var courseId = sectionOption.data('course');
+        var yearLevel = sectionOption.data('year');
+        var courseOption = $('#edit_course option[value="' + courseId + '"]');
+        var instituteId = courseOption.data('institute');
+        
+        modal.find('#edit_institute').val(instituteId).trigger('change');
+        
+        setTimeout(function() {
+            modal.find('#edit_course').val(courseId).trigger('change');
+            setTimeout(function() {
+                modal.find('#edit_year_level').val(yearLevel).trigger('change');
+                setTimeout(function() {
+                    modal.find('#edit_section').val(sectionId);
+                }, 100);
+            }, 100);
+        }, 100);
+        
+        modal.find('#edit_email').val(button.data('email'));
+        modal.find('#edit_address').val(button.data('address'));
+        modal.find('#edit_guardian_name').val(button.data('guardian'));
+        modal.find('#edit_guardian_email').val(button.data('guardian-email'));
+    });
+
+    // Delete All Confirmation
+    $('#confirmDeleteAll').change(function() {
+        $('#deleteAllButton').prop('disabled', !$(this).is(':checked'));
+    });
+
+    // Delete Single Confirmation
+    $('#deleteStudentModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var studentId = button.data('id');
+        var studentName = button.data('name');
+        var modal = $(this);
+        
+        modal.find('#studentToDeleteName').text(studentName);
+        modal.find('#deleteStudentForm').attr('action', '/students/delete/' + studentId + '/');
+    });
+
+    // Export Filter Logic
+    $('#export_institute').change(function() {
+        const instituteId = $(this).val();
+        const courseSelect = $('#export_course');
+        
+        if (instituteId) {
+            courseSelect.prop('disabled', false);
+            courseSelect.find('option').each(function() {
+                const courseInstitute = $(this).data('institute');
+                if (courseInstitute == instituteId || $(this).val() === '') {
+                    $(this).show().prop('disabled', false);
+                } else {
+                    $(this).hide().prop('disabled', true);
+                }
+            });
+            courseSelect.val('');
+            $('#export_section').prop('disabled', true).val('');
+        } else {
+            courseSelect.prop('disabled', true).val('');
+            $('#export_section').prop('disabled', true).val('');
+        }
+    });
+
+    $('#export_course').change(function() {
+        const courseId = $(this).val();
+        const sectionSelect = $('#export_section');
+        
+        if (courseId) {
+            sectionSelect.prop('disabled', false);
+            sectionSelect.find('option').each(function() {
+                const sectionCourse = $(this).data('course');
+                if (sectionCourse == courseId || $(this).val() === '') {
+                    $(this).show().prop('disabled', false);
+                } else {
+                    $(this).hide().prop('disabled', true);
+                }
+            });
+            sectionSelect.val('');
+        } else {
+            sectionSelect.prop('disabled', true).val('');
+        }
+    });
+
+    // Pre-populate Export
+    $('#exportStudentsModal').on('show.bs.modal', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const instituteId = urlParams.get('institute');
+        if (instituteId) {
+            $('#export_institute').val(instituteId).trigger('change');
+            setTimeout(() => {
+                const courseId = urlParams.get('course');
+                if (courseId) {
+                    $('#export_course').val(courseId).trigger('change');
+                    setTimeout(() => {
+                        const sectionId = urlParams.get('section');
+                        if (sectionId) $('#export_section').val(sectionId);
+                    }, 100);
+                }
+            }, 100);
+        }
+        $('#export_year_level').val(urlParams.get('year_level') || '');
+        $('#export_search').val(urlParams.get('search') || '');
+        $('#export_sort').val(urlParams.get('sort') || 'name_asc');
+    });
+
+    // File Input Helper
+    const fileInput = document.getElementById('excel_file');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                document.getElementById('file-name').innerHTML = `<i class="fas fa-file-excel me-2"></i>${this.files[0].name}`;
+            }
+        });
+    }
+
+    // Photo Preview Functions
+    window.previewPhoto = function(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) { $('#studentPhotoPreview').attr('src', e.target.result); }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    window.previewEditPhoto = function(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) { $('#editStudentPhotoPreview').attr('src', e.target.result); }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+});
+
+// IMPORTANT: This prevents the global base.html loader from firing when Exporting.
+document.addEventListener('DOMContentLoaded', function() {
+    const exportForm = document.getElementById('exportForm');
+    if (exportForm) {
+        exportForm.addEventListener('submit', function(e) {
+            // Stop propagation so base.html's global form listener doesn't see this submit
+            e.stopPropagation(); 
+            // Also stop immediate if there are other listeners on this element
+            e.stopImmediatePropagation();
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Just show a button spinner, NOT the full screen loader
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Exporting...';
+            submitBtn.disabled = true;
+            
+            // Re-enable button after a short delay (since download happens in background)
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                $('#exportStudentsModal').modal('hide');
+            }, 3000);
+        });
+    }
+    
+    // Safety net for capture phase
+    document.addEventListener('submit', function(e) {
+        if (e.target.id === 'exportForm') { 
+            e.stopPropagation(); 
+        }
+    }, true);
+});
+
+// Print Modal Logic
+$('#print_institute').change(function() {
+    const instituteId = $(this).val();
+    const courseSelect = $('#print_course');
+    
+    if (instituteId) {
+        courseSelect.prop('disabled', false);
+        courseSelect.find('option').each(function() {
+            const courseInstitute = $(this).data('institute');
+            if (courseInstitute == instituteId || $(this).val() === '') {
+                $(this).show().prop('disabled', false);
+            } else {
+                $(this).hide().prop('disabled', true);
+            }
+        });
+        courseSelect.val('');
+        $('#print_section').prop('disabled', true).val('');
+    } else {
+        courseSelect.prop('disabled', true).val('');
+        $('#print_section').prop('disabled', true).val('');
+    }
+});
+
+$('#print_course').change(function() {
+    const courseId = $(this).val();
+    const sectionSelect = $('#print_section');
+    
+    if (courseId) {
+        sectionSelect.prop('disabled', false);
+        sectionSelect.find('option').each(function() {
+            const sectionCourse = $(this).data('course');
+            if (sectionCourse == courseId || $(this).val() === '') {
+                $(this).show().prop('disabled', false);
+            } else {
+                $(this).hide().prop('disabled', true);
+            }
+        });
+        sectionSelect.val('');
+    } else {
+        sectionSelect.prop('disabled', true).val('');
+    }
+});
+
+// Update the pre-population for Print Modal
+$('#printStudentsModal').on('show.bs.modal', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const instituteId = urlParams.get('institute');
+    if (instituteId) {
+        $('#print_institute').val(instituteId).trigger('change');
+        setTimeout(() => {
+            const courseId = urlParams.get('course');
+            if (courseId) {
+                $('#print_course').val(courseId).trigger('change');
+                setTimeout(() => {
+                    const sectionId = urlParams.get('section');
+                    if (sectionId) $('#print_section').val(sectionId);
+                }, 100);
+            }
+        }, 100);
+    }
+    $('#print_year_level').val(urlParams.get('year_level') || '');
+    $('#print_search').val(urlParams.get('search') || '');
+    $('#print_sort').val(urlParams.get('sort') || 'name_asc');
+});
+
+// Prevent Print Form from triggering global loading screen
+document.addEventListener('DOMContentLoaded', function() {
+    const printForm = document.getElementById('printStudentsForm');
+    if (printForm) {
+        printForm.addEventListener('submit', function(e) {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setTimeout(() => {
+                $('#printStudentsModal').modal('hide');
+            }, 500);
+        });
+    }
+    
+    document.addEventListener('submit', function(e) {
+        if (e.target.id === 'printStudentsForm') {
+            e.stopImmediatePropagation();
+            return false;
+        }
+    }, true);
+});
+</script>
+{% endblock %}

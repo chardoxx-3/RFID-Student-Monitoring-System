@@ -1,0 +1,495 @@
+{% extends "attendance_app/admin/base.html" %}
+
+{% block page_title %}Email Notification Setup{% endblock %}
+
+{% block content %}
+<style>
+    /* --- Page Specific Styles (Navy Theme) --- */
+    :root {
+        --primary-navy: #001f3f;       /* Deep Navy */
+        --secondary-navy: #003366;     /* Rich Navy */
+        --accent-blue: #3b82f6;        /* Bright Blue */
+        --text-muted: #64748b;
+        --bg-light: #f1f5f9;
+        --border-color: #e2e8f0;
+    }
+    
+    /* Card Styling */
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        background-color: white;
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-header h5 {
+        color: var(--primary-navy); /* Use Variable */
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Section Headers within the form */
+    .settings-section {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        height: 100%; /* For grid alignment */
+    }
+
+    .section-header {
+        background: var(--primary-navy); /* Use Variable */
+        color: white;
+        padding: 12px 20px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-body {
+        padding: 20px;
+    }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--primary-navy); /* Match theme */
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    .input-group-text {
+        background-color: #fff;
+        border: 1px solid #e2e8f0;
+        border-right: none;
+        color: #94a3b8;
+    }
+
+    .form-control {
+        border: 1px solid #e2e8f0;
+        border-left: none;
+        padding: 10px 12px;
+        font-size: 0.95rem;
+        color: var(--primary-navy); /* Match theme */
+    }
+
+    .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: none;
+        border-left: 1px solid #3b82f6;
+        margin-left: -1px;
+        z-index: 5;
+    }
+    
+    .input-group:focus-within .input-group-text {
+        border-color: #3b82f6;
+        color: #3b82f6;
+    }
+
+    /* Textarea specific */
+    textarea.form-control {
+        min-height: 120px;
+        line-height: 1.5;
+        border-left: 1px solid #e2e8f0; /* Restore border for textarea if not in input group */
+    }
+    
+    /* Variable Helpers */
+    .variables-info {
+        background-color: #eff6ff;
+        border: 1px dashed #bfdbfe;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 0.85rem;
+        color: #1e40af;
+        margin-top: 10px;
+    }
+    
+    .variables-info code {
+        background-color: white;
+        color: var(--primary-navy);
+        padding: 2px 5px;
+        border-radius: 4px;
+        border: 1px solid #bfdbfe;
+        font-size: 0.8em;
+    }
+
+    /* Help Icon */
+    .help-icon {
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 1.2rem;
+    }
+    .help-icon:hover {
+        color: #3b82f6;
+    }
+
+    /* Example Box in Modal */
+    .example-container {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .variable-example {
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        color: #334155;
+        background: white;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        margin-top: 5px;
+    }
+
+    /* Grid Layout */
+    .settings-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    
+    @media (min-width: 992px) {
+        .settings-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+        .smtp-section {
+            grid-column: 1 / -1;
+        }
+    }
+</style>
+
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-envelope-open-text text-primary"></i>Email Notification Templates</h5>
+        <button class="btn btn-link p-0 help-icon" data-bs-toggle="modal" data-bs-target="#helpModal" title="View Guide">
+            <i class="fas fa-question-circle"></i>
+        </button>
+    </div>
+    <div class="card-body p-4">
+        <form method="post" action="{% url 'email_settings' %}" id="emailSettingsForm">
+            {% csrf_token %}
+            
+            <div class="settings-grid">
+                <!-- Time-In Notification Section -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <i class="fas fa-sun"></i>
+                        <span>Time-In Notification</span>
+                    </div>
+                    <div class="section-body">
+                        <div class="form-group">
+                            <label for="time_in_subject" class="form-label">Subject Line</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-heading"></i></span>
+                                <input type="text" class="form-control" id="time_in_subject" name="time_in_subject" 
+                                       value="{{ email_settings.time_in_subject }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-0">
+                            <label for="time_in_template" class="form-label">Message Body</label>
+                            <textarea class="form-control auto-adjust mb-2" id="time_in_template" name="time_in_template" 
+                                      oninput="autoAdjust(this)" required>{{ email_settings.time_in_template }}</textarea>
+                            <div class="variables-info">
+                                <i class="fas fa-code me-1"></i> <strong>Variables:</strong> 
+                                <code>{student_name}</code>, <code>{guardian_name}</code>, <code>{time_in}</code>, <code>{date}</code>, <code>{section}</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Time-Out Notification Section -->
+                <div class="settings-section">
+                    <div class="section-header">
+                        <i class="fas fa-moon"></i>
+                        <span>Time-Out Notification</span>
+                    </div>
+                    <div class="section-body">
+                        <div class="form-group">
+                            <label for="time_out_subject" class="form-label">Subject Line</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-heading"></i></span>
+                                <input type="text" class="form-control" id="time_out_subject" name="time_out_subject" 
+                                       value="{{ email_settings.time_out_subject }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-0">
+                            <label for="time_out_template" class="form-label">Message Body</label>
+                            <textarea class="form-control auto-adjust mb-2" id="time_out_template" name="time_out_template" 
+                                      oninput="autoAdjust(this)" required>{{ email_settings.time_out_template }}</textarea>
+                            <div class="variables-info">
+                                <i class="fas fa-code me-1"></i> <strong>Variables:</strong> 
+                                <code>{student_name}</code>, <code>{guardian_name}</code>, <code>{time_out}</code>, <code>{date}</code>, <code>{section}</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SMTP Settings Section -->
+                <div class="settings-section smtp-section">
+                    <div class="section-header">
+                        <i class="fas fa-server"></i>
+                        <span>SMTP Server Configuration</span>
+                    </div>
+                    <div class="section-body">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <div class="form-group mb-0">
+                                    <label for="smtp_host" class="form-label">SMTP Host</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-network-wired"></i></span>
+                                        <input type="text" class="form-control" id="smtp_host" name="smtp_host" 
+                                               value="{{ email_settings.smtp_host }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group mb-0">
+                                    <label for="smtp_port" class="form-label">SMTP Port</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-plug"></i></span>
+                                        <input type="number" class="form-control" id="smtp_port" name="smtp_port" 
+                                               value="{{ email_settings.smtp_port }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group mb-0">
+                                    <label for="smtp_username" class="form-label">SMTP Username</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" id="smtp_username" name="smtp_username" 
+                                               value="{{ email_settings.smtp_username }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group mb-0">
+                                    <label for="smtp_password" class="form-label">SMTP Password</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-key"></i></span>
+                                        <input type="password" class="form-control" id="smtp_password" name="smtp_password" 
+                                               value="{{ email_settings.smtp_password }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group mb-0">
+                                    <label for="from_email" class="form-label">From Email Address</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-at"></i></span>
+                                        <input type="email" class="form-control" id="from_email" name="from_email" 
+                                               value="{{ email_settings.from_email }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group mb-0">
+                                    <label for="from_name" class="form-label">Sender Name</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-signature"></i></span>
+                                        <input type="text" class="form-control" id="from_name" name="from_name" 
+                                               value="{{ email_settings.from_name }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#testEmailModal">
+                    <i class="fas fa-paper-plane me-2"></i>Send Test Email
+                </button>
+                <button type="submit" class="btn btn-primary px-4" id="saveSettingsBtn">
+                    <i class="fas fa-save me-2"></i>Save Configuration
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title text-white" id="helpModalLabel"><i class="fas fa-book me-2"></i>Email Templates Guide</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-4">
+                    <h6 class="text-primary fw-bold mb-2">Using Dynamic Variables</h6>
+                    <p class="text-muted small">Variables allow you to personalize emails. They are automatically replaced with real data when an email is sent.</p>
+                    
+                    <div class="example-container">
+                        <div class="mb-3">
+                            <div class="text-xs text-muted text-uppercase fw-bold mb-1">Template Example:</div>
+                            <div class="variable-example">
+                                Subject: Attendance - {student_name}<br><br>
+                                Dear {guardian_name},<br>
+                                Your child {student_name} from {section} has arrived at school at {time_in}.
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="text-xs text-muted text-uppercase fw-bold mb-1">Result:</div>
+                            <div class="variable-example" style="border-left: 3px solid #22c55e;">
+                                Subject: Attendance - John Doe<br><br>
+                                Dear Mrs. Smith,<br>
+                                Your child John Doe from BSIT-1A has arrived at school at 07:45 AM.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary fw-bold mb-2">Available Variables</h6>
+                        <ul class="list-group list-group-flush small">
+                            <li class="list-group-item px-0 py-2"><code class="text-primary">{student_name}</code> - Full name of student</li>
+                            <li class="list-group-item px-0 py-2"><code class="text-primary">{guardian_name}</code> - Parent/Guardian name</li>
+                            <li class="list-group-item px-0 py-2"><code class="text-primary">{time_in}</code> - Check-in time</li>
+                            <li class="list-group-item px-0 py-2"><code class="text-primary">{time_out}</code> - Check-out time</li>
+                            <li class="list-group-item px-0 py-2"><code class="text-primary">{date}</code> - Date of attendance</li>
+                            <li class="list-group-item px-0 py-2"><code class="text-primary">{section}</code> - Student's section/class</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary fw-bold mb-2">Tips</h6>
+                        <div class="alert alert-light border small">
+                            <ul class="mb-0 ps-3">
+                                <li class="mb-1">Keep subject lines concise.</li>
+                                <li class="mb-1">Verify SMTP settings if emails aren't sending.</li>
+                                <li>Use the "Send Test Email" feature to verify your layout.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Email Modal -->
+<div class="modal fade" id="testEmailModal" tabindex="-1" aria-labelledby="testEmailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-primary" id="testEmailModalLabel">
+                    <i class="fas fa-vial me-2"></i>Send Test Email
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'send_test_email' %}" id="testEmailForm">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">Send a test email to verify your SMTP configuration and template layout.</p>
+                    
+                    <div class="form-group">
+                        <label for="test_email" class="form-label">Recipient Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-at"></i></span>
+                            <input type="email" class="form-control" id="test_email" name="test_email" 
+                                   placeholder="Enter valid email address" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-0">
+                        <label for="test_type" class="form-label">Template to Test</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-list"></i></span>
+                            <select class="form-select" id="test_type" name="test_type" required>
+                                <option value="" disabled selected>Choose template...</option>
+                                <option value="time_in">Time-In Notification</option>
+                                <option value="time_out">Time-Out Notification</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4" id="sendTestEmailBtn">
+                        <i class="fas fa-paper-plane me-2"></i>Send Test
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize auto-adjust for all textareas on load
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.auto-adjust').forEach(textarea => {
+            autoAdjust(textarea);
+        });
+    });
+
+    // Auto-adjust textarea height
+    function autoAdjust(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = (textarea.scrollHeight) + 'px';
+    }
+    
+    // Add loading state to forms
+    $('#emailSettingsForm').on('submit', function() {
+        const btn = $(this).find('button[type="submit"]');
+        const originalText = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Saving...');
+        btn.prop('disabled', true);
+    });
+
+    $('#testEmailForm').on('submit', function() {
+        const btn = $(this).find('button[type="submit"]');
+        const originalText = btn.html();
+        btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Sending...');
+        btn.prop('disabled', true);
+        
+        // Re-enable after a short delay (or let page reload handle it)
+        setTimeout(() => {
+            btn.html(originalText);
+            btn.prop('disabled', false);
+        }, 5000);
+    });
+</script>
+{% endblock %}

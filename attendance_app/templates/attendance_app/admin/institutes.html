@@ -1,0 +1,437 @@
+{% extends "attendance_app/admin/base.html" %}
+
+{% block page_title %}Departments Management{% endblock %}
+
+{% block content %}
+<style>
+    /* Custom Styles for this page matching the Navy Theme */
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 20px 24px;
+    }
+
+    .card-header h5 {
+        color: #0f172a; /* Navy */
+        font-weight: 700;
+        margin: 0;
+    }
+
+    /* Table Styling */
+    .table thead th {
+        background-color: #f8fafc;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 16px;
+    }
+
+    .table tbody td {
+        padding: 16px;
+        vertical-align: middle;
+        color: #334155;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    /* Action Buttons in Table */
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s;
+        border: none;
+    }
+
+    .btn-action-view { background-color: #e0f2fe; color: #0284c7; }
+    .btn-action-view:hover { background-color: #0284c7; color: #fff; }
+
+    .btn-action-edit { background-color: #fef3c7; color: #d97706; }
+    .btn-action-edit:hover { background-color: #d97706; color: #fff; }
+
+    .btn-action-delete { background-color: #fee2e2; color: #dc2626; }
+    .btn-action-delete:hover { background-color: #dc2626; color: #fff; }
+
+    /* Modal Form Styling */
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+    }
+
+    .input-group-text {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-right: none;
+        color: #94a3b8;
+    }
+
+    .form-control {
+        border: 1px solid #e2e8f0;
+        border-left: none;
+        padding: 10px 12px;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: none;
+    }
+    
+    .input-group:focus-within .input-group-text {
+        border-color: #3b82f6;
+        color: #3b82f6;
+    }
+
+    /* Code Badge in Table */
+    .badge-code {
+        background-color: #f1f5f9;
+        color: #475569;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 0.85em;
+        border: 1px solid #e2e8f0;
+    }
+</style>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-building me-2 text-primary"></i>Departments Directory</h5>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addInstituteModal">
+            <i class="fas fa-plus me-2"></i> Add Department
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th width="20%"><i class="fas fa-hashtag me-2"></i>Code</th>
+                        <th width="50%"><i class="fas fa-building me-2"></i>Name</th>
+                        <th width="30%" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for institute in institutes %}
+                    <tr>
+                        <td>
+                            <span class="badge-code">{{ institute.code }}</span>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">{{ institute.name }}</div>
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'view_courses' institute.id %}" class="btn btn-action btn-action-view me-1" title="View Programs">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <button class="btn btn-action btn-action-edit me-1" data-bs-toggle="modal" 
+                                    data-bs-target="#editInstituteModal" 
+                                    data-id="{{ institute.id }}"
+                                    data-code="{{ institute.code }}"
+                                    data-name="{{ institute.name }}"
+                                    title="Edit">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button class="btn btn-action btn-action-delete" data-bs-toggle="modal" 
+                                    data-bs-target="#deleteInstituteModal" 
+                                    data-id="{{ institute.id }}"
+                                    data-code="{{ institute.code }}"
+                                    data-name="{{ institute.name }}"
+                                    title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="far fa-folder-open fa-3x mb-3 opacity-50"></i>
+                                <p class="mb-0">No departments found.</p>
+                                <small>Click "Add Department" to create one.</small>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Institute Modal -->
+<div class="modal fade" id="addInstituteModal" tabindex="-1" aria-labelledby="addInstituteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-primary" id="addInstituteModalLabel">Add New Department</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'add_institute' %}" id="addInstituteForm">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="form-group">
+                        <label for="code" class="form-label">Department Code</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                            <input type="text" class="form-control" id="code" name="code" 
+                                   placeholder="e.g. CCS, COG, CAS" required autocomplete="off">
+                        </div>
+                        <div class="form-text text-muted small mt-1">Acronym or short code for the department.</div>
+                    </div>
+                    
+                    <div class="form-group mb-0">
+                        <label for="name" class="form-label">Department Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-university"></i></span>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   placeholder="e.g. College of Computer Studies" required autocomplete="off">
+                        </div>
+                        <div class="form-text text-muted small mt-1">Full official name of the department.</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4" id="addInstituteSubmit">
+                        <i class="fas fa-check me-2"></i>Save Department
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Institute Modal -->
+<div class="modal fade" id="editInstituteModal" tabindex="-1" aria-labelledby="editInstituteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-primary" id="editInstituteModalLabel">Edit Department</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'edit_institute' %}" id="editInstituteForm">
+                {% csrf_token %}
+                <input type="hidden" id="edit_institute_id" name="institute_id">
+                <div class="modal-body p-4">
+                    <div class="form-group">
+                        <label for="edit_code" class="form-label">Department Code</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                            <input type="text" class="form-control" id="edit_code" name="code" 
+                                   placeholder="e.g. CCS" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-0">
+                        <label for="edit_name" class="form-label">Department Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-university"></i></span>
+                            <input type="text" class="form-control" id="edit_name" name="name" 
+                                   placeholder="e.g. College of Computer Studies" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4" id="editInstituteSubmit">
+                        <i class="fas fa-save me-2"></i>Update Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Institute Confirmation Modal -->
+<div class="modal fade" id="deleteInstituteModal" tabindex="-1" aria-labelledby="deleteInstituteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title text-white" id="deleteInstituteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="avatar-lg bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                        <i class="fas fa-trash-alt fa-2x"></i>
+                    </div>
+                    <h5 class="mb-2">Delete Department?</h5>
+                    <p class="text-muted">You are about to delete <strong class="text-dark"><span id="instituteToDeleteCode"></span> - <span id="instituteToDeleteName"></span></strong>.</p>
+                </div>
+                
+                <div class="alert alert-danger bg-danger-subtle border-danger-subtle text-danger mb-0 rounded-3">
+                    <div class="d-flex">
+                        <i class="fas fa-exclamation-circle mt-1 me-3"></i>
+                        <div>
+                            <strong>Warning:</strong> This will permanently remove:
+                            <ul class="mb-0 mt-1 ps-3">
+                                <li>All associated programs/courses</li>
+                                <li>All sections</li>
+                                <li>All student records in this department</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-0">
+                <button type="button" class="btn btn-light px-3" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteInstituteForm" method="post" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger px-4" id="deleteInstituteSubmit">
+                        <i class="fas fa-trash me-2"></i>Yes, Delete It
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Hide loading when modals are closed (in case of errors)
+    $('.modal').on('hidden.bs.modal', function() {
+        if (typeof window.hideLoadingScreen === 'function') {
+            window.hideLoadingScreen();
+        }
+    });
+
+    $('#editInstituteModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var modal = $(this);
+        modal.find('#edit_institute_id').val(button.data('id'));
+        modal.find('#edit_code').val(button.data('code'));
+        modal.find('#edit_name').val(button.data('name'));
+    });
+
+    // Delete Institute Modal Handler
+    $('#deleteInstituteModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var instituteId = button.data('id');
+        var instituteCode = button.data('code');
+        var instituteName = button.data('name');
+        var modal = $(this);
+        
+        modal.find('#instituteToDeleteCode').text(instituteCode);
+        modal.find('#instituteToDeleteName').text(instituteName);
+        modal.find('#deleteInstituteForm').attr('action', '/institutes/delete/' + instituteId + '/');
+    });
+
+    // Handle delete form submission via AJAX
+    $('#deleteInstituteForm').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        
+        if (typeof window.showLoadingScreen === 'function') {
+            window.showLoadingScreen();
+        }
+        
+        $.ajax({
+            type: 'POST',
+            url: form.attr('action'),
+            data: form.serialize(),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (typeof window.hideLoadingScreen === 'function') {
+                        window.hideLoadingScreen();
+                    }
+                    $('#deleteInstituteModal').modal('hide');
+                    
+                    // Show success message
+                    showAlert(response.message, 'success');
+                    
+                    // Remove the deleted row from table
+                    var deletedId = form.attr('action').split('/').filter(Boolean).pop();
+                    $('button[data-id="' + deletedId + '"]').closest('tr').fadeOut(300, function() { 
+                        $(this).remove();
+                        // If no institutes left, show empty message
+                        if ($('tbody tr').length === 0) {
+                             $('tbody').html('<tr><td colspan="3" class="text-center py-5"><div class="text-muted"><i class="far fa-folder-open fa-3x mb-3 opacity-50"></i><p class="mb-0">No departments found.</p><small>Click "Add Department" to create one.</small></div></td></tr>');
+                        }
+                    });
+                    
+                } else {
+                    if (typeof window.hideLoadingScreen === 'function') {
+                        window.hideLoadingScreen();
+                    }
+                    alert('Error: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                if (typeof window.hideLoadingScreen === 'function') {
+                    window.hideLoadingScreen();
+                }
+                alert('An error occurred while deleting the department');
+                $('#deleteInstituteModal').modal('hide');
+            }
+        });
+    });
+
+    // Function to show alert messages
+    function showAlert(message, type) {
+        var alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        var icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        
+        var alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show border-0 shadow-sm" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas ${icon} me-2"></i>
+                    <div>${message}</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>`;
+        
+        // Add alert at the top of the container
+        $('.container-fluid').prepend(alertHtml);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+    }
+});
+
+// Auto-hide messages after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        var messages = document.querySelectorAll('.alert');
+        messages.forEach(function(message) {
+            var fade = new bootstrap.Alert(message);
+            fade.close();
+        });
+    }, 5000);
+});
+</script>
+{% endblock %}

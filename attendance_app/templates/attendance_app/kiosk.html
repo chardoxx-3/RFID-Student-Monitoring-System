@@ -1,0 +1,1464 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance Kiosk</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    #djDebug {
+        display: none !important;
+    }
+
+    :root {
+        /* Theme Variables */
+        --primary-navy: #001f3f;       /* Deep Navy */
+        --secondary-navy: #003366;     /* Rich Navy */
+        --accent-blue: #3b82f6;        /* Bright Blue */
+        --bg-light: #f1f5f9;           /* Slate 100 */
+        --text-dark: #334155;          /* Slate 700 */
+        --text-muted: #94a3b8;         /* Slate 400 */
+        --white: #ffffff;
+        
+        /* Status Colors */
+        --success-green: #10b981;
+        --error-red: #ef4444;
+        --warning-orange: #f59e0b;
+        
+        /* Table Border Color */
+        --border-color: #cbd5e1;       /* Visible Grey for Lines */
+    }
+    
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-light);
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        color: var(--text-dark);
+    }
+    
+    /* --- Header Section --- */
+    .header {
+        background-color: var(--primary-navy);
+        color: var(--white);
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        height: 80px;
+        position: relative;
+        z-index: 100;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .system-branding {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .system-logo img {
+        height: 50px;
+        width: auto;
+    }
+    
+    .system-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--white);
+        letter-spacing: 0.02em;
+    }
+
+    /* Container for Right Side Elements (Status + Time) */
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 25px; /* Space between status and time */
+    }
+    
+    .datetime-display {
+        text-align: right;
+        font-size: 0.9rem;
+        color: #e2e8f0;
+        font-weight: 500;
+        line-height: 1.2;
+    }
+    
+    #current-time {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--white);
+    }
+    
+    /* --- Connection Status --- */
+    .connection-status {
+        display: flex;
+        align-items: center;
+    }
+
+    .connection-status .indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .connection-status .indicator i {
+        font-size: 0.5rem;
+    }
+
+    .connection-status .indicator.online {
+        background-color: rgba(16, 185, 129, 0.2);
+        color: #6ee7b7;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .connection-status .indicator.offline {
+        background-color: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .connection-status .indicator.pending {
+        background-color: rgba(245, 158, 11, 0.2);
+        color: #fcd34d;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    /* --- Marquee Message --- */
+    .welcome-message {
+        text-align: center;
+        font-size: 1.2rem;
+        font-weight: 600;
+        background: var(--white);
+        color: var(--primary-navy);
+        position: relative;
+        height: 50px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .welcome-message::before {
+        content: "Welcome to Attendance Recording System";
+        position: absolute;
+        white-space: nowrap;
+        animation: slideIn 20s linear infinite;
+        width: 100%;
+        line-height: 50px;
+    }
+    
+    @keyframes slideIn {
+        0% { left: 100%; transform: translateX(0); }
+        100% { left: 0; transform: translateX(-100%); }
+    }
+    
+    /* --- Main Layout --- */
+    .main-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 130px);
+        padding: 20px 30px;
+        overflow: hidden;
+        gap: 20px;
+    }
+    
+    /* --- Top Section (Photo, Info, Camera) --- */
+    .student-display-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        height: 300px;
+    }
+    
+    /* Shared Card Styles */
+    .student-photo-container, 
+    .student-info-container, 
+    .live-camera {
+        background-color: var(--white);
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border: none;
+    }
+
+    /* 1. Student Photo */
+    .student-photo-container {
+        width: 300px;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        position: relative;
+        background-color: #f8fafc;
+    }
+    
+    .student-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    /* FIXED: Flex centering for the placeholder icon */
+    .student-photo.no-photo {
+        color: #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* 2. Student Info Center */
+    .student-info-container {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 25px;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+    }
+    
+    .student-info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    .student-id {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+        background: #f1f5f9;
+        padding: 4px 16px;
+        border-radius: 20px;
+        display: inline-block;
+    }
+    
+    .student-name {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--primary-navy);
+        margin-bottom: 10px;
+        line-height: 1.2;
+    }
+    
+    .student-institute {
+        font-size: 1.15rem;
+        color: var(--text-dark);
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    
+    .student-course {
+        font-size: 1rem;
+        color: var(--text-muted);
+    }
+    
+    .status-container {
+        width: 100%;
+        max-width: 500px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 10px;
+    }
+    
+    .rfid-tag {
+        text-align: center;
+        font-family: monospace;
+        font-size: 1rem;
+        color: var(--text-muted);
+        letter-spacing: 2px;
+    }
+    
+    .status-bar {
+        padding: 15px;
+        text-align: center;
+        font-size: 1.2rem;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        background-color: #f1f5f9;
+        color: var(--primary-navy);
+        border: 1px solid #e2e8f0;
+    }
+
+    /* 3. Live Camera */
+    .live-camera {
+        width: 400px;
+        height: 100%;
+        background-color: #0f172a;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .live-camera video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1);
+    }
+    
+    #camera-status {
+        position: absolute;
+        bottom: 15px;
+        right: 15px;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        backdrop-filter: blur(4px);
+    }
+    
+    /* --- Attendance Table Section (UPDATED FOR VISIBLE LINES) --- */
+    .attendance-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background-color: var(--white);
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        padding: 0;
+    }
+    
+    .attendance-table-container {
+        flex: 1;
+        overflow: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 transparent;
+    }
+    
+    .attendance-table-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    .attendance-table-container::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 3px;
+    }
+
+    .attendance-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        table-layout: fixed;
+        /* Added Border around the whole table */
+        border: 1px solid var(--border-color);
+    }
+    
+    .attendance-table thead th {
+        padding: 16px 12px;
+        text-align: center;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        background-color: var(--primary-navy);
+        color: var(--white);
+        position: sticky;
+        top: 0;
+        letter-spacing: 0.05em;
+        z-index: 10;
+        border-bottom: 2px solid var(--secondary-navy);
+        /* Added Vertical Line in Header */
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .attendance-table td {
+        padding: 12px;
+        text-align: center;
+        /* Made Horizontal Line Darker/Visible */
+        border-bottom: 1px solid var(--border-color);
+        /* Added Vertical Line */
+        border-right: 1px solid var(--border-color);
+        vertical-align: middle;
+        color: var(--text-dark);
+        font-size: 0.95rem;
+    }
+    
+    /* Remove the right border from the last column for a clean look */
+    .attendance-table th:last-child,
+    .attendance-table td:last-child {
+        border-right: none;
+    }
+
+    /* Remove bottom border from last row so it doesn't double up with container */
+    .attendance-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .attendance-table tr:hover {
+        background-color: #f8fafc;
+    }
+    
+    .attendance-table thead th:nth-child(2),
+    .attendance-table td:nth-child(2),
+    .attendance-table thead th:nth-child(3),
+    .attendance-table td:nth-child(3) {
+        text-align: left;
+        padding-left: 20px;
+    }
+    
+    .photo-cell img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .photo-placeholder {
+        width: 40px;
+        height: 40px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        margin: 0 auto;
+    }
+
+    /* --- Animations --- */
+    @keyframes highlight {
+        from { background-color: rgba(16, 185, 129, 0.2); }
+        to { background-color: transparent; }
+    }
+    
+    .highlight-row {
+        animation: highlight 2s;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 0.7; transform: scale(0.98); }
+        50% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0.7; transform: scale(0.98); }
+    }
+    
+    .scanning {
+        animation: pulse 1.5s infinite;
+    }
+    
+    .hidden-camera {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+/* --- Logo Screen (Idle) - Updated to Match Login Theme --- */
+    .logo-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        /* Dark Navy Base */
+        background-color: var(--primary-navy); 
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        transition: opacity 0.5s ease;
+        overflow: hidden; /* Keep animations inside */
+    }
+
+    .logo-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* Animated Background Layer */
+    .logo-animated-bg {
+        position: absolute;
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%;
+        z-index: -1;
+        /* Navy Gradients from Login */
+        background: radial-gradient(at 0% 0%, hsla(210, 100%, 12%, 1) 0, transparent 50%), 
+                    radial-gradient(at 50% 0%, hsla(210, 100%, 20%, 1) 0, transparent 50%), 
+                    radial-gradient(at 100% 0%, hsla(210, 100%, 12%, 1) 0, transparent 50%);
+        background-size: 200% 200%;
+        animation: gradientFlow 15s ease infinite;
+    }
+
+    /* Floating Shapes */
+    .bg-shape {
+        position: absolute;
+        filter: blur(80px);
+        opacity: 0.5;
+        z-index: -1;
+        animation: floatShape 20s infinite alternate;
+    }
+
+    .shape-1 {
+        top: -10%; left: -10%; width: 50vw; height: 50vw;
+        background: radial-gradient(circle, var(--accent-blue) 0%, transparent 70%);
+        animation-delay: 0s;
+    }
+    
+    .shape-2 {
+        bottom: -10%; right: -10%; width: 60vw; height: 60vw;
+        background: radial-gradient(circle, #003366 0%, transparent 70%);
+        animation-delay: -5s;
+    }
+
+    /* Keyframes */
+    @keyframes gradientFlow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @keyframes floatShape {
+        0% { transform: translate(0, 0) scale(1); }
+        100% { transform: translate(50px, 50px) scale(1.1); }
+    }
+
+    /* Content Styling */
+    .logo-screen-content {
+        text-align: center;
+        animation: fadeIn 1s ease-in-out;
+        position: relative;
+        z-index: 2; /* Ensure text sits above background */
+    }
+
+    .logo-screen-logo img {
+        height: 180px;
+        width: auto;
+        margin-bottom: 40px;
+        /* Add a slight glow to the logo to pop against dark bg */
+        filter: drop-shadow(0 0 15px rgba(255,255,255,0.1));
+    }
+
+    .logo-screen-title {
+        font-size: 3rem;
+        font-weight: 800;
+        /* Changed to White */
+        color: var(--white); 
+        margin-bottom: 15px;
+        letter-spacing: -0.05em;
+        text-transform: uppercase;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .logo-screen-subtitle {
+        font-size: 1.5rem;
+        /* Changed to light gray */
+        color: #cbd5e1; 
+        font-weight: 300;
+        letter-spacing: 0.1em;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+</head>
+<body>
+    <!-- Hidden Camera for Capture -->
+    <div class="hidden-camera">
+        <video id="camera-feed" class="camera-feed" autoplay playsinline></video>
+    </div>
+    
+    <!-- Header Section -->
+    <div class="header">
+        <div class="system-branding">
+            <div class="system-logo">
+                {% if system_settings.logo %}
+                    <img src="{{ system_settings.logo.url }}" alt="System Logo">
+                {% else %}
+                    <img src="{% static 'attendance_app/img/logo.png' %}" alt="CPSC Logo">
+                {% endif %}
+            </div>
+            <div class="system-title">
+                {{ system_settings.system_title|default:"Camiguin Polytechnic State College" }}
+            </div>
+        </div>
+        
+        <!-- Right Side: Status + Time -->
+        <div class="header-right">
+            <div class="connection-status">
+                <span id="connection-indicator" class="indicator offline">
+                    <i class="fas fa-circle"></i>
+                    <span id="connection-text">Offline</span>
+                </span>
+            </div>
+            
+            <div class="datetime-display">
+                <div id="current-date"></div>
+                <div id="current-time"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Welcome Message -->
+    <div class="welcome-message">
+        <!-- Content added via CSS -->
+    </div>
+    
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Student Display Section -->
+        <div class="student-display-container">
+            <!-- Student Photo -->
+            <div class="student-photo-container">
+                <div id="student-photo" class="student-photo no-photo"><i class="fas fa-user-circle fa-5x"></i></div>
+            </div>
+            
+            <!-- Student Information (Centered, No Line) -->
+            <div class="student-info-container">
+                <div class="student-info">
+                    <div id="student-id" class="student-id">Student ID</div>
+                    <div id="student-name" class="student-name">Name</div>
+                    <div id="student-institute" class="student-institute">Institute</div>
+                    <div id="student-course" class="student-course">Course</div>
+                </div>
+                
+                <div class="status-container">
+                    <div class="rfid-tag">
+                        ID: <span id="scanned-rfid">------------</span>
+                    </div>
+                    
+                    <div id="status-bar" class="status-bar">
+                        Ready to scan RFID card
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Live Camera -->
+            <div class="live-camera">
+                <video id="live-camera-feed" autoplay playsinline></video>
+                <div id="camera-status"><i class="fas fa-video me-1"></i> Live Feed</div>
+            </div>
+        </div>
+        
+        <!-- Attendance Container -->
+        <div class="attendance-container">
+            <div class="attendance-table-container">
+                <table class="attendance-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 8%;">Photo</th>
+                            <th style="width: 15%;">Student ID</th>
+                            <th style="width: 25%;">Name</th>
+                            <th style="width: 13%;">Login AM</th>
+                            <th style="width: 13%;">Logout AM</th>
+                            <th style="width: 13%;">Login PM</th>
+                            <th style="width: 13%;">Logout PM</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-records">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+<!-- Logo Screen for Idle State -->
+    <div id="logo-screen" class="logo-screen hidden">
+        <!-- New Background Elements -->
+        <div class="logo-animated-bg"></div>
+        <div class="bg-shape shape-1"></div>
+        <div class="bg-shape shape-2"></div>
+
+        <div class="logo-screen-content">
+            <div class="logo-screen-logo">
+                {% if system_settings.logo %}
+                    <img src="{{ system_settings.logo.url }}" alt="System Logo">
+                {% else %}
+                    <img src="{% static 'attendance_app/img/logo.png' %}" alt="CPSC Logo">
+                {% endif %}
+            </div>
+            <div class="logo-screen-title">
+                {{ system_settings.system_title|default:"Camiguin Polytechnic State College" }}
+            </div>
+            <div class="logo-screen-subtitle">
+                Attendance Recording System
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+<script>
+    // Optimized global variables
+    let cameraStream = null;
+    const tagCooldowns = {};
+    let rfidBuffer = '';
+    let rfidTimeout = null;
+    let lastAttendanceRecords = [];
+    let isProcessing = false;
+    let studentCache = {};
+    let resetTimer = null;
+    let studentDataCache = {};
+    let attendanceDataCache = {};
+
+    // Initialize date and time display
+    function updateDateTime() {
+        const now = new Date();
+        const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        
+        document.getElementById('current-date').textContent = now.toLocaleDateString(undefined, dateOptions).toUpperCase();
+        document.getElementById('current-time').textContent = now.toLocaleTimeString(undefined, timeOptions).toUpperCase();
+    }
+
+    // Update every second
+    setInterval(updateDateTime, 1000);
+    updateDateTime(); // Initial call
+
+    // Connection status functions
+    function checkInternetConnection() {
+        return navigator.onLine;
+    }
+
+    function updateConnectionStatus() {
+        const isOnline = checkInternetConnection();
+        const indicator = $('#connection-indicator');
+        const text = $('#connection-text');
+        
+        if (isOnline) {
+            indicator.removeClass('offline pending').addClass('online');
+            text.text('Online');
+            // Check for pending emails when coming back online
+            processPendingEmails();
+        } else {
+            indicator.removeClass('online pending').addClass('offline');
+            text.text('Offline');
+        }
+    }
+
+    function processPendingEmails() {
+        if (!checkInternetConnection()) return;
+        
+        fetch('/api/attendance/process_pending_emails/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.processed > 0) {
+                console.log(`Processed ${data.processed} pending emails`);
+                // Show success message
+                $('#status-bar').text(`Sent ${data.processed} pending emails`).delay(2000).queue(function() {
+                    $(this).text('Ready to scan RFID card').dequeue();
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error processing pending emails:', error);
+        });
+    }
+
+    // Optimized text-to-speech function
+    function speak(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.volume = 1;
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            
+            const voices = window.speechSynthesis.getVoices();
+            const femaleVoice = voices.find(voice => 
+                voice.name.includes('Female') || 
+                voice.name.includes('Woman') || 
+                voice.name.includes('Zira')
+            );
+            
+            if (femaleVoice) utterance.voice = femaleVoice;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    async function capturePhoto() {
+        const video = document.getElementById('live-camera-feed');
+        
+        // SAFETY CHECK: If video isn't ready or has 0 width, return null immediately
+        if (!video || video.readyState !== 4 || video.videoWidth === 0 || video.videoHeight === 0) {
+            console.warn("Camera not ready or unavailable. Skipping photo.");
+            return null;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        
+        try {
+            // Draw the current video frame to canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to blob
+            return new Promise((resolve) => {
+                canvas.toBlob(resolve, 'image/jpeg', 0.8);
+            });
+        } catch (e) {
+            console.warn("Error creating image blob:", e);
+            return null;
+        }
+    }
+
+    function startCooldownForTag(tagId) {
+        tagCooldowns[tagId] = {
+            active: true,
+            timer: setTimeout(() => {
+                tagCooldowns[tagId].active = false;
+            }, 60000) // 1 minute cooldown
+        };
+    }
+
+    // Optimized RFID Tag Scanner
+    document.addEventListener('keydown', function(e) {
+        if (!e.key.match(/[0-9]/)) return;
+
+        rfidBuffer += e.key;
+
+        if (rfidTimeout) clearTimeout(rfidTimeout);
+
+        rfidTimeout = setTimeout(() => {
+            if (rfidBuffer.length >= 10) {
+                const tag = rfidBuffer.substring(0, 10);
+                console.log("RFID Tag Scanned:", tag);
+                handleTagScanned(tag);
+            } else {
+                console.warn("Incomplete RFID read:", rfidBuffer);
+            }
+            rfidBuffer = '';
+        }, 150); // Reduced timeout for faster response
+    });
+
+// Optimized student cache initialization
+async function initializeStudentCache() {
+    try {
+        const response = await fetch('/api/students/rfid_map/');
+        studentCache = await response.json();
+        console.log('Preloaded RFID student data');
+        
+        // Preload student photos
+        Object.values(studentCache).forEach(student => {
+            if (student.photo_url) {
+                const img = new Image();
+                img.src = student.photo_url;
+                studentDataCache[student.student_id] = {
+                    name: student.full_name,
+                    id: student.student_id,
+                    course: student.course,
+                    section: student.section,
+                    photoUrl: student.photo_url
+                };
+            }
+        });
+        
+        // DELETE THIS LINE FROM HERE:
+        // fetchAttendanceRecords(); 
+    } catch (error) {
+        console.error('Error preloading student data:', error);
+    }
+}
+
+    // Logo screen functionality
+    let lastActivityTime = Date.now();
+    let logoScreenVisible = false;
+    const IDLE_TIMEOUT = 30000; // 30 seconds of inactivity
+
+    function showLogoScreen() {
+        if (!logoScreenVisible) {
+            $('#logo-screen').removeClass('hidden');
+            logoScreenVisible = true;
+            console.log('Logo screen shown - system idle');
+        }
+    }
+
+    function hideLogoScreen() {
+        if (logoScreenVisible) {
+            $('#logo-screen').addClass('hidden');
+            logoScreenVisible = false;
+            console.log('Logo screen hidden - activity detected');
+        }
+    }
+
+    function resetIdleTimer() {
+        lastActivityTime = Date.now();
+        hideLogoScreen();
+    }
+
+    function checkIdleTime() {
+        const currentTime = Date.now();
+        const idleTime = currentTime - lastActivityTime;
+        
+        // Show logo screen after 30 seconds of inactivity
+        if (idleTime > IDLE_TIMEOUT && !logoScreenVisible && !isProcessing) {
+            showLogoScreen();
+        }
+    }
+
+    // Add event listeners for user activity
+    function setupIdleDetection() {
+        // Reset timer on any user interaction
+        document.addEventListener('keydown', resetIdleTimer);
+        document.addEventListener('click', resetIdleTimer);
+        document.addEventListener('mousemove', resetIdleTimer);
+        document.addEventListener('touchstart', resetIdleTimer);
+        
+        // Check idle time every 5 seconds
+        setInterval(checkIdleTime, 5000);
+        
+        // Start the idle timer when page loads
+        lastActivityTime = Date.now();
+    }
+
+    async function handleTagScanned(tag) {
+        console.log('Processing RFID Tag:', tag);
+        
+        // Reset idle timer on every RFID scan
+        resetIdleTimer();
+        
+        if (isProcessing) {
+            console.log('System busy - ignoring scan');
+            return;
+        }
+        
+        isProcessing = true;
+        
+        // Clear any pending reset
+        if (resetTimer) clearTimeout(resetTimer);
+        
+        // Immediately show the scanned tag
+        $('#scanned-rfid').text(tag);
+        
+        // Check internet connection
+        const isOnline = checkInternetConnection();
+        if (!isOnline) {
+            $('#connection-indicator').removeClass('online').addClass('pending');
+            $('#connection-text').text('Pending Sync');
+        }
+        
+        // Check if this specific tag is in cooldown
+        if (tagCooldowns[tag]?.active) {
+            showErrorState('RFID tag already registered. Please wait 1 minute.');
+            isProcessing = false;
+            return;
+        }
+        
+        // Show scanning state immediately
+        $('#status-bar')
+            .text('Processing RFID...')
+            .addClass('scanning')
+            .css({
+                'background-color': 'var(--warning-orange)',
+                'color': 'white',
+                'border-color': 'var(--warning-orange)'
+            });
+        
+        try {
+            // Check cache first for instant response
+            const cachedStudent = studentCache[tag];
+            if (cachedStudent) {
+                // Get current time for immediate display
+                const now = new Date();
+                const currentTime = now.toTimeString().substring(0, 8);
+                
+                // Determine period (AM/PM)
+                const isMorning = now.getHours() < 12;
+                
+                // Check if session is already completed
+                let sessionCompleted = false;
+                let message = '';
+                
+                // Create or update record immediately
+                let updatedRecords = [...lastAttendanceRecords];
+                const existingIndex = updatedRecords.findIndex(
+                    r => r.student_id === cachedStudent.student_id
+                );
+                
+                if (existingIndex >= 0) {
+                    const record = updatedRecords[existingIndex];
+                    
+                    if (isMorning) {
+                        if (record.morning_in && record.morning_out) {
+                            sessionCompleted = true;
+                            message = 'Morning session already recorded';
+                        } else if (!record.morning_in) {
+                            record.morning_in = currentTime;
+                            message = `Morning Time In at ${formatTimeForDisplay(currentTime)}`;
+                        } else if (!record.morning_out) {
+                            record.morning_out = currentTime;
+                            message = `Morning Time Out at ${formatTimeForDisplay(currentTime)}`;
+                        }
+                    } else {
+                        if (record.afternoon_in && record.afternoon_out) {
+                            sessionCompleted = true;
+                            message = 'Afternoon session already recorded';
+                        } else if (!record.afternoon_in) {
+                            record.afternoon_in = currentTime;
+                            message = `Afternoon Time In at ${formatTimeForDisplay(currentTime)}`;
+                        } else if (!record.afternoon_out) {
+                            record.afternoon_out = currentTime;
+                            message = `Afternoon Time Out at ${formatTimeForDisplay(currentTime)}`;
+                        }
+                    }
+                    record.isUpdated = true;
+                } else {
+                    // Create new record
+                    const newRecord = {
+                        student_id: cachedStudent.student_id,
+                        student_name: cachedStudent.full_name,
+                        student_photo_url: cachedStudent.photo_url,
+                        morning_in: isMorning ? currentTime : '',
+                        morning_out: '',
+                        afternoon_in: !isMorning ? currentTime : '',
+                        afternoon_out: '',
+                        isUpdated: true
+                    };
+                    updatedRecords.unshift(newRecord);
+                    message = isMorning ? 
+                        `Morning Time In at ${formatTimeForDisplay(currentTime)}` : 
+                        `Afternoon Time In at ${formatTimeForDisplay(currentTime)}`;
+                }
+                
+                // Update the table immediately
+                updateAttendanceTable(updatedRecords);
+                
+                // Display student data with appropriate message
+                displayStudentData({
+                    success: true,
+                    student_name: cachedStudent.full_name,
+                    student_id: cachedStudent.student_id,
+                    course: cachedStudent.course,
+                    section: cachedStudent.section,
+                    institute: cachedStudent.institute,
+                    student_photo_url: cachedStudent.photo_url,
+                    message: message
+                }, !sessionCompleted);
+                
+                // Start cooldown only if we actually logged attendance
+                if (!sessionCompleted) {
+                    startCooldownForTag(tag);
+                    
+                    // Process photo and server update in background
+                    setTimeout(async () => {
+                        try {
+                            // Prepare FormData
+                            const formData = new FormData();
+                            formData.append('rfid_tag', tag);
+
+                            // Prepare headers
+                            const headers = {
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            };
+                            
+                            // Add offline header if needed
+                            if (!isOnline) {
+                                headers['X-Offline-Mode'] = 'true';
+                            }
+
+                            // CAPTURE PHOTO SAFELY
+                            try {
+                                const photoBlob = await capturePhoto();
+                                // Only append the photo if we successfully got one
+                                if (photoBlob) {
+                                    formData.append('photo', photoBlob, 'attendance_photo.jpg');
+                                }
+                            } catch (photoError) {
+                                console.warn('Photo capture failed, proceeding without photo');
+                            }
+                            
+                            // SEND TO SERVER (This runs even if photo fails)
+                            const response = await fetch(`/api/attendance/log/${tag}/`, {
+                                method: 'POST',
+                                headers: headers,
+                                body: formData
+                            });
+                            
+                            // Refresh data after server confirms
+                            fetchAttendanceRecords();
+                            
+                            // If we were offline and now online, process pending
+                            if (isOnline) {
+                                processPendingEmails();
+                            }
+                        } catch (error) {
+                            console.error('Background processing error:', error);
+                        }
+                    }, 0);
+                }
+                
+                // Reset after 3 seconds
+                resetTimer = setTimeout(() => {
+                    resetToDefaultState();
+                    isProcessing = false;
+                }, 2000);
+            } else {
+                showErrorState('Student record not found.');
+                isProcessing = false;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showErrorState('Error processing request');
+            isProcessing = false;
+        }
+    }
+
+    // Add this helper function to format time for display
+    function formatTimeForDisplay(timeString) {
+        if (!timeString) return '';
+        
+        const [hours, minutes, seconds] = timeString.split(':');
+        const hour = parseInt(hours, 10);
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        
+        return `${hour12}:${minutes} ${period}`;
+    }
+
+    // In the displayStudentData function, add institute handling
+    function displayStudentData(data, shouldGreet = true) {
+        // Update student photo from cache if available
+        const photoContainer = $('#student-photo');
+        if (data.student_photo_url) {
+            photoContainer.removeClass('no-photo').html(`<img src="${data.student_photo_url}" alt="Student Photo" class="student-photo">`);
+        } else {
+            photoContainer.addClass('no-photo').html('<i class="fas fa-user-circle fa-5x"></i>');
+        }
+        
+        // Update student information
+        $('#student-id').text(data.student_id || 'Student ID');
+        $('#student-name').text(data.student_name || 'Name');
+        $('#student-course').text(data.course ? `${data.course}${data.section ? ' - ' + data.section : ''}` : 'Course');
+        
+        // Add institute information if available
+        if (data.institute) {
+            $('#student-institute').text(data.institute).show();
+        } else {
+            $('#student-institute').text('Institute').show(); // Always show but with default text if no data
+        }
+        
+        // Show status message with optimized transition
+        $('#status-bar')
+            .text(data.message)
+            .removeClass('scanning')
+            .css({
+                'background-color': 'rgba(16, 185, 129, 0.1)',
+                'color': 'var(--success-green)',
+                'border-color': 'rgba(16, 185, 129, 0.2)'
+            });
+        
+        // Only greet if shouldGreet is true
+        if (shouldGreet) {
+            const hour = new Date().getHours();
+            let greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+            speak(`${greeting} ${data.student_name}`);
+        }
+    }
+
+    function fetchAttendanceRecords() {
+        // Add timestamp to prevent caching
+        const timestamp = new Date().getTime();
+        
+        fetch(`/api/kiosk/attendance/?_=${timestamp}`)
+            .then(response => {
+                if (!response.ok) throw new Error("Network error");
+                return response.json();
+            })
+            .then(data => {
+                const serverRecords = data.records || [];
+                
+                // Merge with locally updated records (if any)
+                const locallyUpdated = lastAttendanceRecords.filter(r => r.isUpdated);
+                const mergedRecords = [...serverRecords];
+                
+                locallyUpdated.forEach(localRecord => {
+                    const existingIndex = mergedRecords.findIndex(
+                        r => r.student_id === localRecord.student_id
+                    );
+                    
+                    if (existingIndex >= 0) {
+                        // Preserve local updates (e.g., latest tap)
+                        mergedRecords[existingIndex] = { 
+                            ...mergedRecords[existingIndex], 
+                            ...localRecord 
+                        };
+                    } else {
+                        mergedRecords.unshift(localRecord);
+                    }
+                });
+                
+                updateAttendanceTable(mergedRecords);
+                lastAttendanceRecords = mergedRecords;
+            })
+            .catch(error => {
+                console.error("Fetch error:", error);
+                // Fallback: Keep showing the last known records
+                updateAttendanceTable(lastAttendanceRecords);
+            });
+    }
+
+    function formatTime(timeString) {
+        if (!timeString) return '';
+        
+        // Split into parts (handles both "HH:MM" and "HH:MM:SS")
+        const parts = timeString.split(':');
+        const hours = parseInt(parts[0], 10);
+        const minutes = parts[1] ? parseInt(parts[1], 10) : 0;
+        
+        // Determine AM/PM
+        const period = hours >= 12 ? 'PM' : 'AM';
+        const hours12 = hours % 12 || 12; // Convert 0 to 12 (midnight)
+        
+        // Format without seconds, with leading zeros
+        return `${hours12.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}${period}`;
+    }
+
+    function updateAttendanceTable(records) {
+        requestAnimationFrame(() => {
+            const tbody = $('#attendance-records');
+            
+            if (records.length === 0) {
+                tbody.html('<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-muted);">No students found</td></tr>');
+                return;
+            }
+
+            // Convert time strings to timestamps for precise comparison
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            
+            records.forEach(record => {
+                // Create a timestamp for each time field
+                record.sortTimes = {
+                    morning_in: record.morning_in ? new Date(`${today}T${record.morning_in}`).getTime() : 0,
+                    morning_out: record.morning_out ? new Date(`${today}T${record.morning_out}`).getTime() : 0,
+                    afternoon_in: record.afternoon_in ? new Date(`${today}T${record.afternoon_in}`).getTime() : 0,
+                    afternoon_out: record.afternoon_out ? new Date(`${today}T${record.afternoon_out}`).getTime() : 0
+                };
+                
+                // Find the most recent timestamp for this record
+                record.latestActivity = Math.max(
+                    record.sortTimes.morning_in,
+                    record.sortTimes.morning_out,
+                    record.sortTimes.afternoon_in,
+                    record.sortTimes.afternoon_out
+                );
+            });
+
+            // Sort by latest activity in descending order
+            records.sort((a, b) => b.latestActivity - a.latestActivity);
+
+            // Clear and rebuild table
+            tbody.empty();
+            const fragment = document.createDocumentFragment();
+            
+            records.forEach((record) => {
+                const row = document.createElement('tr');
+
+                // Photo cell
+                const photoCell = document.createElement('td');
+                photoCell.className = 'photo-cell';
+                if (record.student_photo_url) {
+                    const img = document.createElement('img');
+                    img.src = record.student_photo_url;
+                    img.alt = 'Student Photo';
+                    photoCell.appendChild(img);
+                } else {
+                    // Use icon as placeholder when no photo is available
+                    const placeholder = document.createElement('div');
+                    placeholder.className = 'photo-placeholder';
+                    placeholder.innerHTML = '<i class="fas fa-user-circle"></i>';
+                    photoCell.appendChild(placeholder);
+                }
+                row.appendChild(photoCell);
+
+                // Student ID cell
+                const idCell = document.createElement('td');
+                idCell.style.textAlign = 'left';
+                idCell.textContent = record.student_id;
+                row.appendChild(idCell);
+
+                // Name cell
+                const nameCell = document.createElement('td');
+                nameCell.style.textAlign = 'left';
+                nameCell.style.fontWeight = '500';
+                nameCell.style.color = 'var(--primary-navy)';
+                nameCell.textContent = record.student_name;
+                row.appendChild(nameCell);
+
+                // Time cells
+                ['morning_in', 'morning_out', 'afternoon_in', 'afternoon_out'].forEach(field => {
+                    const cell = document.createElement('td');
+                    cell.textContent = record[field] ? formatTime(record[field]) : '';
+                    if(record[field]) cell.style.color = 'var(--text-dark)';
+                    row.appendChild(cell);
+                });
+
+                fragment.appendChild(row);
+            });
+
+            tbody[0].appendChild(fragment);
+            lastAttendanceRecords = records;
+        });
+    }
+
+    function showErrorState(message) {
+        $('#status-bar')
+            .text(message)
+            .removeClass('scanning')
+            .css({
+                'background-color': 'rgba(239, 68, 68, 0.1)',
+                'color': 'var(--error-red)',
+                'border-color': 'rgba(239, 68, 68, 0.2)'
+            });
+        
+        // Reset after 3 seconds for errors too
+        resetTimer = setTimeout(() => {
+            resetToDefaultState();
+            isProcessing = false;
+        }, 1000);
+    }
+
+    // In the resetToDefaultState function, reset the institute field
+    function resetToDefaultState() {
+        // Reset student display to default labels
+        $('#student-photo').addClass('no-photo').html('<i class="fas fa-user-circle fa-5x"></i>');
+        $('#student-id').text('Student ID');
+        $('#student-name').text('Name');
+        $('#student-course').text('Course');
+        $('#student-institute').text('Institute'); // Reset institute text
+        $('#scanned-rfid').text('------------');
+        
+        // Reset status bar to original text with optimized transition
+        $('#status-bar')
+            .text('Ready to scan RFID card')
+            .removeClass('scanning')
+            .css({
+                'background-color': '#f1f5f9',
+                'color': 'var(--primary-navy)',
+                'border-color': '#e2e8f0'
+            });
+    }
+
+    // Initialize both cameras (hidden and live)
+    function initializeCameras() {
+        const hiddenVideo = document.getElementById('camera-feed');
+        const liveVideo = document.getElementById('live-camera-feed');
+        const cameraStatus = document.getElementById('camera-status');
+        
+        // Check if browser supports mediaDevices
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            cameraStatus.textContent = 'Camera not supported';
+            return;
+        }
+        
+        // Try to access the camera
+        navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                facingMode: 'user' // Use 'environment' for rear camera
+            },
+            audio: false
+        })
+        .then(function(stream) {
+            cameraStream = stream; // Store the stream globally
+            
+            // Connect to both video elements
+            hiddenVideo.srcObject = stream;
+            liveVideo.srcObject = stream.clone();
+            
+            // Hide status when video starts playing
+            liveVideo.onplaying = function() {
+                cameraStatus.style.display = 'none';
+            };
+        })
+        .catch(function(err) {
+            console.error('Camera error:', err);
+            cameraStatus.textContent = 'Camera not available';
+        });
+    }
+
+$(document).ready(function() {
+    initializeCameras();
+    
+    // CHANGE: Call this immediately so the table loads ASAP
+    fetchAttendanceRecords();
+    
+    // This runs in the background and won't block the table anymore
+    initializeStudentCache(); 
+    
+    setupIdleDetection();
+    
+    // Initialize connection monitoring
+    updateConnectionStatus();
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+    setInterval(updateConnectionStatus, 30000);
+    
+    // Refresh attendance records every 30 seconds
+    setInterval(fetchAttendanceRecords, 30000);
+
+        
+        // Load voices for speech synthesis
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = function() {
+                console.log('Voices loaded:', window.speechSynthesis.getVoices());
+            };
+            
+            // Some browsers need this to populate voices
+            const voices = window.speechSynthesis.getVoices();
+            if (voices.length === 0) {
+                window.speechSynthesis.addEventListener('voiceschanged', function() {
+                    console.log('Voices loaded:', window.speechSynthesis.getVoices());
+                });
+            }
+        }
+    });
+
+    // Clean up camera stream when page unloads
+    window.addEventListener('beforeunload', function() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+        }
+    });
+</script>
+</body>
+</html>

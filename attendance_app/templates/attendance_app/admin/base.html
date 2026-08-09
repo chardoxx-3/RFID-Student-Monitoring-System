@@ -1,0 +1,1191 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ system_settings.system_title|default:"CPSC RFID Student Monitoring" }}{% endblock %}</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    
+    <!-- Core Application CSS -->
+    <style>
+        #djDebug {
+            display: none !important;
+        }
+        :root {
+            /* True Navy Blue Theme */
+            --primary-navy: #001f3f;       /* Deep Navy - Sidebar/Primary */
+            --secondary-navy: #003366;     /* Rich Navy */
+            --accent-blue: #3b82f6;        /* Bright Blue */
+            --accent-hover: #2563eb;       /* Blue 600 */
+            --bg-light: #f1f5f9;           /* Slate 100 for main content background */
+            --text-dark: #334155;          /* Slate 700 */
+            --text-muted: #64748b;         /* Slate 500 */
+            --white: #ffffff;
+            --sidebar-width: 260px;
+            --topbar-height: 70px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* --- Top Bar --- */
+        .top-bar {
+            height: var(--topbar-height);
+            background: var(--white);
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: var(--sidebar-width);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: left 0.3s ease;
+        }
+
+        .system-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Toggle Button Styling */
+        #sidebarToggle {
+            border: none;
+            background: transparent;
+            color: var(--primary-navy);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+        
+        #sidebarToggle:hover {
+            background: #f1f5f9;
+            color: var(--accent-blue);
+        }
+
+        .system-logo img {
+            height: 40px;
+            width: auto;
+        }
+
+        .system-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary-navy);
+            letter-spacing: -0.025em;
+        }
+
+        .user-info .btn-outline-light {
+            color: var(--text-dark);
+            border-color: #e2e8f0;
+            background: transparent;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .user-info .btn-outline-light:hover, 
+        .user-info .btn-outline-light:focus {
+            background-color: #f8fafc;
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--primary-navy);
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 1005; /* Increased z-index to sit above topbar on mobile */
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease; /* Smooth slide */
+            box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 20px 0; 
+            margin: 0;
+            flex: 1;
+            overflow-y: auto;
+            margin-top: var(--topbar-height);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+        
+        /* Webkit Scrollbar Customization */
+        .sidebar-nav::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--topbar-height);
+            background: var(--secondary-navy);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            z-index: -1;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 2px;
+            width: 100%;
+        }
+
+        .sidebar-nav > li > a {
+            display: flex;
+            align-items: center;
+            padding: 12px 25px;
+            color: #b0c4de;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar-nav > li > a:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--white);
+        }
+
+        .sidebar-nav > li > a.active {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), transparent);
+            color: var(--white);
+            border-left-color: var(--accent-blue);
+        }
+
+        .sidebar-nav i {
+            width: 24px;
+            margin-right: 12px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        /* --- Submenu --- */
+        .submenu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background: rgba(0, 0, 0, 0.2);
+            box-shadow: inset 0 5px 10px -5px rgba(0,0,0,0.5);
+            display: none; 
+        }
+
+        .submenu li {
+            margin: 0;
+        }
+
+        .submenu a {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px 10px 58px;
+            font-size: 0.9rem;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .submenu a:hover {
+            color: var(--white);
+            background: rgba(255, 255, 255, 0.03);
+            border-left-color: var(--accent-blue);
+        }
+
+        .submenu a.active {
+            color: var(--white);
+            font-weight: 600;
+        }
+
+        .submenu a i {
+            margin-right: 10px;
+            font-size: 0.9em;
+            width: 20px;
+            opacity: 0.8;
+        }
+
+        .submenu-icon {
+            font-size: 0.75em;
+            opacity: 0.7;
+            transition: transform 0.3s ease;
+            margin-left: auto;
+        }
+
+        .has-submenu.open > .submenu-toggle .submenu-icon {
+            transform: rotate(180deg);
+        }
+        
+        .has-submenu.open > .submenu-toggle {
+            color: var(--white);
+            background: rgba(255,255,255,0.03);
+        }
+
+        .kiosk-link {
+            margin-top: 20px;
+            padding: 0 15px;
+        }
+        
+        .kiosk-link a {
+            background: linear-gradient(45deg, var(--secondary-navy), var(--primary-navy));
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            padding: 12px 15px !important;
+            justify-content: center;
+            border-left: 1px solid rgba(255,255,255,0.15) !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        
+        .kiosk-link a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            border-left: 1px solid rgba(255,255,255,0.3) !important;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            color: #b0c4de;
+            font-size: 0.8rem;
+            text-align: center;
+            background: var(--secondary-navy);
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--topbar-height);
+            padding: 30px;
+            min-height: calc(100vh - var(--topbar-height));
+            transition: margin 0.3s ease;
+        }
+
+        .page-content-header {
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-navy);
+            letter-spacing: -0.025em;
+            margin: 0;
+        }
+
+        /* --- Components --- */
+        .card, .dashboard-card, .attendance-card {
+            border: none;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* --- Modals --- */
+        .modal-content {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 20px 25px;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            color: var(--primary-navy);
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #f1f5f9;
+            padding: 15px 25px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            padding: 10px 20px;
+            font-weight: 500;
+            border-radius: 8px;
+        }
+
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        /* --- Responsive Styles & Overlay --- */
+        
+        /* Backdrop for Sidebar on Mobile */
+        .sidebar-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 31, 63, 0.5); /* Navy transparent */
+            z-index: 1004; /* Below sidebar, above topbar */
+            display: none;
+            backdrop-filter: blur(2px);
+        }
+        
+        .sidebar-backdrop.show {
+            display: block;
+        }
+
+        /* Desktop Mode Required Screen */
+        .desktop-required-screen {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #f8fafc;
+            z-index: 10000; /* On top of everything */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .desktop-required-icon {
+            font-size: 4rem;
+            color: var(--primary-navy);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 991.98px) {
+            :root {
+                --sidebar-width: 0px;
+            }
+            
+            .sidebar {
+                transform: translateX(-100%);
+                width: 260px;
+            }
+            
+            /* Class added via JS to show sidebar */
+            .sidebar.active {
+                transform: translateX(0);
+                box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            }
+            
+            .top-bar {
+                left: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .system-title {
+                display: none;
+            }
+        }
+
+        /* Mobile Phone Blocker (< 768px) */
+        @media (max-width: 767.98px) {
+            .desktop-required-screen {
+                display: flex; /* Show the blocker on phones */
+            }
+            body {
+                overflow: hidden; /* Prevent scrolling behind the blocker */
+            }
+        }
+
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Desktop Mode Required Overlay -->
+    <div class="desktop-required-screen">
+        <div class="desktop-required-icon">
+            <i class="fas fa-desktop"></i>
+        </div>
+        <h2 class="fw-bold mb-3" style="color: var(--primary-navy);">Desktop Mode Required</h2>
+        <p class="text-muted mb-4 lead">
+            To ensure the best user experience and data visualization, this system requires a larger screen or <strong>Desktop Mode</strong>.
+        </p>
+        <div class="d-grid gap-2">
+            <div class="alert alert-info border-0 bg-white shadow-sm text-start">
+                <small><i class="fas fa-info-circle me-2"></i><strong>How to enable:</strong><br>
+                1. Tap the browser menu (⋮ or AA)<br>
+                2. Select "Desktop Site" or "Request Desktop Website"</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Backdrop -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Top Bar with Logo and System Title -->
+    <div class="top-bar">
+        <div class="system-header">
+            <!-- Mobile Toggle Button -->
+            <button class="d-lg-none" id="sidebarToggle" aria-label="Toggle Navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="system-logo">
+                {% if system_settings.logo %}
+                    <img src="{{ system_settings.logo.url }}" alt="System Logo">
+                {% else %}
+                    <img src="{% static 'attendance_app/img/logo.png' %}" alt="CPSC Logo">
+                {% endif %}
+            </div>
+            <div class="system-title d-none d-md-block">
+                {{ system_settings.system_title|default:"CPSC Student Monitoring System" }}
+            </div>
+        </div>
+        
+        <div class="user-info">
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-light dropdown-toggle text-dark" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="d-flex align-items-center gap-2">
+                        <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                            <i class="fas fa-user text-sm"></i>
+                        </div>
+                        <span class="d-none d-sm-inline">{{ request.user.get_full_name|default:request.user.username }}</span>
+                    </span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg" aria-labelledby="userDropdown">
+                    <div class="px-3 py-2 border-bottom mb-2">
+                        <p class="mb-0 fw-bold text-dark">{{ request.user.get_full_name|default:request.user.username }}</p>
+                        <small class="text-muted">Administrator</small>
+                    </div>
+                    <li><a class="dropdown-item py-2" href="{% url 'profile_settings' %}"><i class="fas fa-user-cog me-2 text-muted"></i>Profile</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger py-2" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="mainSidebar">
+        <!-- Logo Area in Sidebar (Visual adjustment) -->
+        <div class="d-flex align-items-center px-4 py-3" style="height: var(--topbar-height); border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div class="text-white fw-bold ps-1">MENU</div>
+            <!-- Close button for mobile sidebar -->
+            <button class="btn btn-link text-white ms-auto d-lg-none p-0" id="sidebarClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <ul class="sidebar-nav">
+            <li>
+                <a href="{% url 'admin_dashboard' %}" class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="has-submenu">
+                <a href="#" class="submenu-toggle">
+                    <i class="fas fa-building"></i>
+                    <span>Departments</span>
+                    <i class="fas fa-chevron-down ms-auto submenu-icon"></i>
+                </a>
+                <ul class="submenu">
+                    <li>
+                        <a href="{% url 'institutes' %}" class="{% if request.resolver_match.url_name == 'institutes' %}active{% endif %}">
+                            <i class="fas fa-list"></i>
+                            <span>All Departments</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="course-link" data-bs-toggle="modal" data-bs-target="#selectInstituteModal" data-target-type="courses">
+                            <i class="fas fa-book"></i>
+                            <span>Programs</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="section-link" data-bs-toggle="modal" data-bs-target="#selectInstituteModal" data-target-type="sections">
+                            <i class="fas fa-layer-group"></i>
+                            <span>Sections</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <a href="{% url 'students' %}" class="{% if request.resolver_match.url_name == 'students' %}active{% endif %}">
+                    <i class="fas fa-users"></i>
+                    <span>Students</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'reports' %}" class="{% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reports</span>
+                </a>
+            </li>
+            <li class="has-submenu">
+                <a href="#" class="submenu-toggle">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                    <i class="fas fa-chevron-down ms-auto submenu-icon"></i>
+                </a>
+                <ul class="submenu">
+                    <li>
+                        <a href="{% url 'profile_settings' %}" class="{% if request.resolver_match.url_name == 'profile_settings' %}active{% endif %}">
+                            <i class="fas fa-user-cog"></i>
+                            <span>Profile</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'email_settings' %}" class="{% if request.resolver_match.url_name == 'email_settings' %}active{% endif %}">
+                            <i class="fas fa-envelope"></i>
+                            <span>Email Notifications</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'system_settings' %}" class="{% if request.resolver_match.url_name == 'system_settings' %}active{% endif %}">
+                            <i class="fas fa-info-circle"></i>
+                            <span>System Info</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="kiosk-link">
+                <a href="{% url 'kiosk' %}" target="_blank">
+                    <i class="fas fa-qrcode"></i>
+                    <span>Attendance Kiosk</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">
+                    <i class="fas fa-question-circle"></i>
+                    <span>About Us</span>
+                </a>
+            </li>
+        </ul>
+        
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <div class="fw-medium text-white">{{ system_settings.footer_text|default:"© CPSC" }}</div>
+            <div class="small opacity-50">v{{ system_settings.version|default:"1.0.0" }}</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container-fluid">
+            <!-- Page Title -->
+            <div class="page-content-header">
+                <h2 class="page-title">{% block page_title %}{% endblock %}</h2>
+                <div class="date-display text-muted">
+                    <i class="far fa-calendar-alt me-2"></i> {% now "l, F j, Y" %}
+                </div>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {{ message }}
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Content Block -->
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Select Institute Modal -->
+    <div class="modal fade" id="selectInstituteModal" tabindex="-1" aria-labelledby="selectInstituteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="selectInstituteModalLabel">Select Institute</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-light border mb-3 text-center">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        <span id="modalMessage">Please select an institute first to view its courses.</span>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="instituteSelect" class="form-label fw-bold text-muted small">INSTITUTE</label>
+                        <select class="form-select form-select-lg" id="instituteSelect">
+                            <option value="" selected disabled>Choose an institute...</option>
+                            {% for institute in institutes %}
+                            <option value="{{ institute.id }}">{{ institute.code }} - {{ institute.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div id="courseSelection" class="form-group" style="display: none;">
+                        <label for="courseSelect" class="form-label fw-bold text-muted small">COURSE</label>
+                        <select class="form-select form-select-lg" id="courseSelect">
+                            <option value="" selected disabled>Choose a course...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary px-4" id="proceedButton" disabled>
+                        Proceed <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Us Modal -->
+    <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title text-white modal-title" id="aboutModalLabel">About the Team</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="text-center mb-5">
+                        <h4 class="fw-bold text-primary mb-3">RFID-Based Student Monitoring System</h4>
+                        <p class="text-muted lead fs-6">"Automated attendance tracking with real-time email notifications for enhanced student safety."</p>
+                    </div>
+                    
+                    <div class="team-members row g-4 justify-content-center mb-5">
+                        <div class="col-6 col-md-3">
+                            <div class="team-member text-center">
+                                <div class="member-image mb-3 position-relative d-inline-block">
+                                    <img src="{% static 'attendance_app/img/yzrah.png' %}" alt="Yzrah" class="rounded-circle shadow-sm" width="100" height="100" style="object-fit: cover;">
+                                    <span class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-1 fs-6"><i class="fas fa-star"></i></span>
+                                </div>
+                                <div class="member-name fw-bold text-dark">Yzrah Hushneah Obsid</div>
+                                <div class="member-role text-muted small text-uppercase">Team Leader</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="team-member text-center">
+                                <div class="member-image mb-3">
+                                    <img src="{% static 'attendance_app/img/cj.jpg' %}" alt="Chrisjun" class="rounded-circle shadow-sm" width="100" height="100" style="object-fit: cover;">
+                                </div>
+                                <div class="member-name fw-bold text-dark">Chrisjun Sabote</div>
+                                <div class="member-role text-muted small text-uppercase">Hardware Dev</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="team-member text-center">
+                                <div class="member-image mb-3">
+                                    <img src="{% static 'attendance_app/img/richard.jpg' %}" alt="Richard" class="rounded-circle shadow-sm" width="100" height="100" style="object-fit: cover;">
+                                </div>
+                                <div class="member-name fw-bold text-dark">Richard Miculob</div>
+                                <div class="member-role text-muted small text-uppercase">Software Dev</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="team-member text-center">
+                                <div class="member-image mb-3">
+                                    <img src="{% static 'attendance_app/img/angelika.jpg' %}" alt="Angelika" class="rounded-circle shadow-sm" width="100" height="100" style="object-fit: cover;">
+                                </div>
+                                <div class="member-name fw-bold text-dark">Angelika Barsobia</div>
+                                <div class="member-role text-muted small text-uppercase">Testing Support</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="about-content bg-light p-4 rounded-3 border">
+                        <p class="mb-3">
+                            <i class="fas fa-quote-left text-primary me-2 opacity-25"></i>
+                            We are BSIT students from Camiguin Polytechnic State College.
+                        </p>
+                        <p class="mb-0">
+                            Our system leverages RFID technology to automate entry/exit logging. By capturing photos and sending real-time emails to guardians, we aim to modernize school safety protocols and attendance accuracy.
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Global Loading Screen Scripts -->
+    <script>
+    // Define Loading Screen Functions Globally
+    window.showLoadingScreen = function() {
+        // Create loading screen if it doesn't exist
+        if (!document.getElementById('loading-screen')) {
+            const loadingScreen = document.createElement('div');
+            loadingScreen.id = 'loading-screen';
+            loadingScreen.className = 'loading-screen';
+            loadingScreen.innerHTML = `
+                <div class="loading-content">
+                    <div class="loading-logo">
+                        {% if system_settings.logo %}
+                            <img src="{{ system_settings.logo.url }}" alt="System Logo">
+                        {% else %}
+                            <img src="{% static 'attendance_app/img/logo.png' %}" alt="CPSC Logo">
+                        {% endif %}
+                    </div>
+                    <div class="loading-title">
+                        {{ system_settings.system_title|default:"Camiguin Polytechnic State College" }}
+                    </div>
+                    <div class="loading-subtitle">
+                        Attendance Recording System
+                    </div>
+                    <div class="loading-animation">
+                        <div class="loading-spinner"></div>
+                    </div>
+                    <div class="loading-text">
+                        Processing...
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(loadingScreen);
+            
+            // Add loading screen styles - Updated for Navy Theme
+            const styles = `
+                .loading-screen {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(255, 255, 255, 0.98);
+                    z-index: 9999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: opacity 0.5s ease;
+                }
+                
+                .loading-content {
+                    text-align: center;
+                    max-width: 1000px;
+                    padding: 2rem;
+                    animation: fadeIn 0.5s ease-out;
+                }
+                
+                .loading-logo {
+                    margin-bottom: 1.5rem;
+                }
+                
+                .loading-logo img {
+                    width: 80px;
+                    height: 80px;
+                    object-fit: contain;
+                }
+                
+                .loading-title {
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    color: #001f3f; /* Navy Blue */
+                    margin-bottom: 0.25rem;
+                }
+                
+                .loading-subtitle {
+                    font-size: 0.9rem;
+                    color: #64748b;
+                    margin-bottom: 2rem;
+                }
+                
+                .loading-spinner {
+                    width: 50px;
+                    height: 50px;
+                    border: 3px solid rgba(0, 31, 63, 0.1); /* Navy Opacity */
+                    border-radius: 50%;
+                    border-top-color: #3b82f6; /* Accent Blue */
+                    margin: 0 auto;
+                    animation: spin 0.8s linear infinite;
+                }
+                
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                
+                .loading-text {
+                    margin-top: 1rem;
+                    font-size: 0.875rem;
+                    color: #64748b;
+                    font-weight: 500;
+                }
+            `;
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = styles;
+            document.head.appendChild(styleSheet);
+        }
+        
+        const loadingScreen = document.getElementById('loading-screen');
+        loadingScreen.style.display = 'flex';
+        setTimeout(() => {
+            loadingScreen.style.opacity = '1';
+        }, 10);
+    };
+    
+    window.hideLoadingScreen = function() {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500);
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Sidebar Toggle Logic ---
+        const sidebar = document.getElementById('mainSidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarClose = document.getElementById('sidebarClose');
+        const backdrop = document.getElementById('sidebarBackdrop');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            backdrop.classList.toggle('show');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            backdrop.classList.remove('show');
+        }
+
+        if(sidebarToggle) {
+            sidebarToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleSidebar();
+            });
+        }
+        
+        if(sidebarClose) {
+            sidebarClose.addEventListener('click', closeSidebar);
+        }
+
+        if(backdrop) {
+            backdrop.addEventListener('click', closeSidebar);
+        }
+
+        // Close sidebar when clicking a link on mobile (except submenu toggles)
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            if(!link.classList.contains('submenu-toggle')) {
+                link.addEventListener('click', () => {
+                    if(window.innerWidth < 992) {
+                        closeSidebar();
+                    }
+                });
+            }
+        });
+
+        // --- End Sidebar Toggle Logic ---
+
+        // Check if there are error messages and hide loading screen
+        function checkForErrorsAndHideLoading() {
+            const alerts = document.querySelectorAll('.alert-danger, .alert-warning');
+            if (alerts.length > 0) {
+                window.hideLoadingScreen();
+            }
+        }
+        
+        // Cache for API responses
+        const apiCache = new Map();
+        
+        // Function to fetch data with caching
+        async function fetchWithCache(url) {
+            if (apiCache.has(url)) {
+                return apiCache.get(url);
+            }
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                apiCache.set(url, data);
+                return data;
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+        
+        // Submenu toggle functionality
+        const submenuToggles = document.querySelectorAll('.submenu-toggle');
+        
+        submenuToggles.forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                const parentLi = this.closest('.has-submenu');
+                const submenu = this.nextElementSibling;
+                const icon = this.querySelector('.submenu-icon');
+                
+                // Close all other submenus first
+                document.querySelectorAll('.submenu').forEach(sm => {
+                    if (sm !== submenu) {
+                        sm.style.display = 'none';
+                        sm.previousElementSibling.querySelector('.submenu-icon').classList.remove('fa-chevron-up');
+                        sm.previousElementSibling.querySelector('.submenu-icon').classList.add('fa-chevron-down');
+                        sm.closest('.has-submenu').classList.remove('open');
+                        
+                        // Reset rotation
+                        const otherIcon = sm.previousElementSibling.querySelector('.submenu-icon');
+                        if (otherIcon) otherIcon.style.transform = 'rotate(0deg)';
+                    }
+                });
+                
+                // Toggle current submenu
+                if (submenu.style.display === 'block') {
+                    submenu.style.display = 'none';
+                    // Rotation handled by CSS class 'open' now
+                    parentLi.classList.remove('open');
+                } else {
+                    submenu.style.display = 'block';
+                    parentLi.classList.add('open');
+                }
+            });
+            
+            // Automatically open if current page is in submenu
+            const submenu = toggle.nextElementSibling;
+            const activeItem = submenu.querySelector('.active');
+            
+            if (activeItem) {
+                submenu.style.display = 'block';
+                toggle.closest('.has-submenu').classList.add('open');
+            }
+        });
+        
+        // Handle institute selection modal
+        let targetType = '';
+        let targetUrl = '';
+        
+        // Handle click on course or section links
+        document.querySelectorAll('.course-link, .section-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                targetType = this.getAttribute('data-target-type');
+                const message = targetType === 'courses' 
+                    ? 'Please select an institute first to view its courses.' 
+                    : 'Please select an institute first to view its sections.';
+                    
+                document.getElementById('modalMessage').textContent = message;
+                
+                // Show/hide course selection based on target type
+                if (targetType === 'sections') {
+                    document.getElementById('courseSelection').style.display = 'block';
+                } else {
+                    document.getElementById('courseSelection').style.display = 'none';
+                }
+            });
+        });
+        
+        // Enable proceed button when institute is selected
+        document.getElementById('instituteSelect').addEventListener('change', function() {
+            const instituteId = this.value;
+            
+            if (targetType === 'sections') {
+                // Show loading state
+                const courseSelect = document.getElementById('courseSelect');
+                courseSelect.innerHTML = '<option value="" selected disabled>Loading courses...</option>';
+                courseSelect.disabled = true;
+                
+                // Use cached or fresh data
+                fetchWithCache(`/api/courses/${instituteId}/`)
+                    .then(courses => {
+                        courseSelect.disabled = false;
+                        courseSelect.innerHTML = '<option value="" selected disabled>Choose a course...</option>';
+                        
+                        if (courses.length === 0) {
+                            courseSelect.innerHTML = '<option value="" selected disabled>No courses found for this institute</option>';
+                        } else {
+                            courses.forEach(course => {
+                                const option = document.createElement('option');
+                                option.value = course.id;
+                                option.textContent = course.code + ' - ' + course.name;
+                                courseSelect.appendChild(option);
+                            });
+                        }
+                        
+                        // Enable proceed only if both institute and course are selected
+                        const proceedButton = document.getElementById('proceedButton');
+                        proceedButton.disabled = !instituteId || !courseSelect.value;
+                    })
+                    .catch(error => {
+                        courseSelect.disabled = false;
+                        courseSelect.innerHTML = '<option value="" selected disabled>Error loading courses</option>';
+                        console.error('Error fetching courses:', error);
+                        
+                        if (typeof toastr !== 'undefined') {
+                            toastr.error('Failed to load courses for this institute');
+                        }
+                    });
+            } else {
+                // For courses, just enable if institute is selected
+                document.getElementById('proceedButton').disabled = !instituteId;
+            }
+        });
+        
+        // Enable proceed button when course is selected (for sections)
+        document.getElementById('courseSelect').addEventListener('change', function() {
+            const instituteId = document.getElementById('instituteSelect').value;
+            const courseId = this.value;
+            document.getElementById('proceedButton').disabled = !instituteId || !courseId;
+        });
+        
+        // Handle proceed button click
+        document.getElementById('proceedButton').addEventListener('click', function() {
+            const instituteId = document.getElementById('instituteSelect').value;
+            
+            if (targetType === 'courses') {
+                targetUrl = "{% url 'view_courses' 0 %}".replace('0', instituteId);
+            } else if (targetType === 'sections') {
+                const courseId = document.getElementById('courseSelect').value;
+                if (courseId) {
+                    targetUrl = "{% url 'view_sections' 0 %}".replace('0', courseId);
+                }
+            }
+            
+            if (targetUrl) {
+                window.showLoadingScreen();
+                window.location.href = targetUrl;
+            }
+        });
+        
+        // Reset modal when closed
+        document.getElementById('selectInstituteModal').addEventListener('hidden.bs.modal', function() {
+            document.getElementById('instituteSelect').value = '';
+            document.getElementById('courseSelect').innerHTML = '<option value="" selected disabled>Choose a course...</option>';
+            document.getElementById('courseSelection').style.display = 'none';
+            document.getElementById('proceedButton').disabled = true;
+            targetType = '';
+            targetUrl = '';
+        });
+        
+        // Loading screen functionality for navigation
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Skip if it's a modal trigger or has special attributes
+                if (this.hasAttribute('data-bs-toggle') || 
+                    this.hasAttribute('data-bs-target') ||
+                    this.classList.contains('submenu-toggle') ||
+                    this.classList.contains('course-link') ||
+                    this.classList.contains('section-link') ||
+                    this.getAttribute('href') === '#' ||
+                    this.getAttribute('href')?.startsWith('javascript:') ||
+                    this.target === '_blank') {
+                    return;
+                }
+                
+                const href = this.getAttribute('href');
+                if (href && !href.includes('#') && href !== window.location.href) {
+                    window.showLoadingScreen();
+                }
+            });
+        });
+        
+        // Loading screen for form submissions
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function() {
+                window.showLoadingScreen();
+            });
+        });
+        
+        // Check for existing errors on page load
+        setTimeout(checkForErrorsAndHideLoading, 100);
+        
+        // Hide loading screen when page is fully loaded
+        window.addEventListener('load', function() {
+            setTimeout(window.hideLoadingScreen, 500);
+        });
+        
+        // Monitor for new error alerts and hide loading screen
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1 && node.classList && 
+                            (node.classList.contains('alert-danger') || 
+                             node.classList.contains('alert-warning'))) {
+                            // Error alert detected, hide loading screen
+                            setTimeout(window.hideLoadingScreen, 300);
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Start observing the messages container
+        const messagesContainer = document.querySelector('.messages');
+        if (messagesContainer) {
+            observer.observe(messagesContainer, {
+                childList: true,
+                subtree: true
+            });
+        }
+    });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

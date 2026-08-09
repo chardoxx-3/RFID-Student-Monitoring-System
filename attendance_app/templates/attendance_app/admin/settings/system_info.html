@@ -1,0 +1,636 @@
+{% extends "attendance_app/admin/base.html" %}
+{% load static %}
+
+{% block page_title %}System Information{% endblock %}
+
+{% block content %}
+<style>
+    /* --- Page Specific Styles (Navy Theme) --- */
+    
+    /* Card Styling */
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        background-color: white;
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 20px 24px;
+    }
+
+    .card-header h5 {
+        color: #0f172a; /* Navy */
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+    }
+
+    .input-group-text {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-right: none;
+        color: #94a3b8;
+    }
+
+    .form-control, .form-select {
+        border: 1px solid #e2e8f0;
+        border-left: none;
+        padding: 10px 12px;
+        font-size: 0.95rem;
+        color: #334155;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #3b82f6;
+        box-shadow: none;
+        border-left: 1px solid #3b82f6;
+        margin-left: -1px;
+        z-index: 5;
+    }
+    
+    .input-group:focus-within .input-group-text {
+        border-color: #3b82f6;
+        color: #3b82f6;
+    }
+
+    /* Buttons */
+    .btn-modern {
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.2s;
+        border: 1px solid #e2e8f0;
+    }
+    .btn-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    /* System Logs Table */
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        background-color: #f8fafc;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 12px 16px;
+    }
+    
+    .table tbody td {
+        padding: 12px 16px;
+        vertical-align: middle;
+        color: #334155;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.9rem;
+    }
+
+    /* Status Badges */
+    .badge-log {
+        font-weight: 600;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+    }
+    
+    .badge-error { background-color: #fee2e2; color: #dc2626; }
+    .badge-warning { background-color: #fef3c7; color: #d97706; }
+    .badge-info { background-color: #e0f2fe; color: #0284c7; }
+    
+    /* Camera Preview Area */
+    .camera-preview-container {
+        position: relative;
+        min-height: 360px;
+        background-color: #0f172a;
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #cameraPreview {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    /* RFID Input Display */
+    #rfidTestInput {
+        font-family: 'Courier New', monospace;
+        letter-spacing: 4px;
+        font-weight: 700;
+        font-size: 1.5rem;
+        background-color: #f8fafc;
+        border: 2px dashed #cbd5e1;
+        color: #0f172a;
+    }
+    
+    /* File Input */
+    input[type="file"]::file-selector-button {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: none;
+        padding: 8px 12px;
+        margin-right: 12px;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    input[type="file"]::file-selector-button:hover {
+        background-color: #e2e8f0;
+        color: #0f172a;
+    }
+    
+    /* Current Logo Display */
+    .current-logo-container {
+        background-color: #f8fafc;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        display: inline-block;
+    }
+</style>
+
+<div class="row g-4">
+    <!-- Left Column: System Config -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5><i class="fas fa-cog text-primary"></i>System Configuration</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="{% url 'system_settings' %}" enctype="multipart/form-data" id="systemSettingsForm">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label for="system_title" class="form-label">System Title</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-heading"></i></span>
+                            <input type="text" class="form-control" id="system_title" name="system_title" 
+                                   value="{{ form.instance.system_title }}" placeholder="e.g. CPSC Monitoring System" required>
+                        </div>
+                        <div class="form-text text-muted small mt-1">Displayed in the browser tab and top bar.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="footer_text" class="form-label">Footer Text</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-align-center"></i></span>
+                            <input type="text" class="form-control" id="footer_text" name="footer_text" 
+                                   value="{{ form.instance.footer_text }}" placeholder="e.g. © 2023 CPSC" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="version" class="form-label">System Version</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-code-branch"></i></span>
+                            <input type="text" class="form-control" id="version" name="version" 
+                                   value="{{ form.instance.version }}" placeholder="e.g. 1.0.0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="logo" class="form-label">System Logo</label>
+                        <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+                        
+                        {% if form.instance.logo %}
+                        <div class="mt-3">
+                            <div class="current-logo-container">
+                                <img src="{{ form.instance.logo.url }}" alt="Current Logo" style="height: 40px; width: auto;">
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="logo-clear" name="logo-clear">
+                                <label class="form-check-label text-danger small fw-bold" for="logo-clear">
+                                    <i class="fas fa-trash-alt me-1"></i> Remove current logo
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary" id="saveSystemSettingsBtn">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Status & Hardware -->
+    <div class="col-lg-6">
+        <!-- System Status Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar text-primary"></i>System Status</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-4">
+                    <label class="form-label mb-2">DATABASE CONNECTION</label>
+                    <div class="d-flex align-items-center bg-success-subtle text-success border border-success-subtle p-3 rounded-3">
+                        <div class="fs-4 me-3"><i class="fas fa-check-circle"></i></div>
+                        <div>
+                            <div class="fw-bold">Connected Successfully</div>
+                            <div class="small opacity-75">System is communicating with the database.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label mb-2">RFID HARDWARE</label>
+                        <button type="button" class="btn btn-outline-primary btn-modern w-100 py-3" data-bs-toggle="modal" data-bs-target="#rfidTestModal">
+                            <i class="fas fa-microchip fa-2x mb-2 d-block"></i>
+                            Test Reader
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-2">CAMERA MODULE</label>
+                        <button type="button" class="btn btn-outline-primary btn-modern w-100 py-3" data-bs-toggle="modal" data-bs-target="#cameraTestModal">
+                            <i class="fas fa-camera fa-2x mb-2 d-block"></i>
+                            Test Camera
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Google Drive Integration Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fab fa-google-drive text-primary"></i>Google Drive Integration</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <div class="fw-bold mb-1">Connection Status</div>
+                        {% if drive_authenticated %}
+                            <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Connected</span>
+                        {% else %}
+                            <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Disconnected</span>
+                        {% endif %}
+                    </div>
+                    <div>
+                        {% if drive_authenticated %}
+                            <a href="{% url 'google_drive_disconnect' %}" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-unlink me-1"></i> Disconnect
+                            </a>
+                        {% else %}
+                            <a href="{% url 'google_drive_auth' %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plug me-1"></i> Connect
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <p class="text-muted small mb-0">
+                    Connect Google Drive to automatically backup attendance photos. Connection persists after system restart.
+                </p>
+                
+                {% if not drive_authenticated %}
+                <div class="alert alert-warning mt-3 mb-0 py-2 small">
+                    <i class="fas fa-exclamation-triangle me-1"></i> Integration required for cloud photo storage.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Logs Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-clipboard-list text-primary"></i>System Logs</h5>
+                <form method="get" class="d-flex align-items-center" id="logsPerPageForm">
+                    <label for="per_page" class="me-2 text-muted small fw-bold">SHOW:</label>
+                    <select name="per_page" id="per_page" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+                        <option value="10" {% if request.GET.per_page == '10' or not request.GET.per_page %}selected{% endif %}>10 rows</option>
+                        <option value="20" {% if request.GET.per_page == '20' %}selected{% endif %}>20 rows</option>
+                        <option value="50" {% if request.GET.per_page == '50' %}selected{% endif %}>50 rows</option>
+                    </select>
+                </form>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th width="20%"><i class="fas fa-clock me-2"></i>Timestamp</th>
+                                <th width="15%"><i class="fas fa-tag me-2"></i>Type</th>
+                                <th><i class="fas fa-comment-alt me-2"></i>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in system_logs %}
+                            <tr>
+                                <td class="text-muted font-monospace small">{{ log.timestamp|date:"M d, Y H:i:s" }}</td>
+                                <td>
+                                    {% if log.log_type == 'error' %}
+                                        <span class="badge-log badge-error"><i class="fas fa-times-circle me-1"></i>Error</span>
+                                    {% elif log.log_type == 'warning' %}
+                                        <span class="badge-log badge-warning"><i class="fas fa-exclamation-triangle me-1"></i>Warning</span>
+                                    {% else %}
+                                        <span class="badge-log badge-info"><i class="fas fa-info-circle me-1"></i>Info</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ log.message }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fas fa-search fa-2x mb-3 opacity-25"></i>
+                                        <p class="mb-0">No logs recorded.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if system_logs.has_other_pages %}
+                <div class="p-3 border-top bg-light">
+                    <nav aria-label="Logs pagination">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if system_logs.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1" aria-label="First">
+                                        <span aria-hidden="true"><i class="fas fa-angle-double-left"></i></span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ system_logs.previous_page_number }}" aria-label="Previous">
+                                        <span aria-hidden="true"><i class="fas fa-angle-left"></i></span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="page-item disabled">
+                                <span class="page-link border-0 bg-transparent text-muted fw-bold">
+                                    Page {{ system_logs.number }} of {{ system_logs.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if system_logs.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ system_logs.next_page_number }}" aria-label="Next">
+                                        <span aria-hidden="true"><i class="fas fa-angle-right"></i></span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ system_logs.paginator.num_pages }}" aria-label="Last">
+                                        <span aria-hidden="true"><i class="fas fa-angle-double-right"></i></span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Camera Test Modal -->
+<div class="modal fade" id="cameraTestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+<div class="modal-header bg-dark text-white border-0">
+    <!-- Added text-white class below -->
+    <h5 class="modal-title text-white"><i class="fas fa-camera me-2"></i>Camera Diagnostics</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+            <div class="modal-body p-0 bg-dark">
+                <!-- Status Bar -->
+                <div id="cameraStatus" class="text-center py-2 bg-secondary text-white small">
+                    Initializing...
+                </div>
+                
+                <!-- Preview -->
+                <div class="camera-preview-container">
+                    <video id="cameraPreview" autoplay playsinline></video>
+                    <div class="position-absolute text-white-50 small" style="bottom: 10px;">
+                        Live Preview
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light justify-content-center border-0 p-3">
+                <button id="startCamera" class="btn btn-success px-4 rounded-pill">
+                    <i class="fas fa-play me-2"></i>Start Camera
+                </button>
+                <button id="stopCamera" class="btn btn-danger px-4 rounded-pill" disabled>
+                    <i class="fas fa-stop me-2"></i>Stop Camera
+                </button>
+                <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RFID Test Modal -->
+<div class="modal fade" id="rfidTestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+<div class="modal-header bg-primary text-white">
+    <!-- Added text-white class below -->
+    <h5 class="modal-title text-white"><i class="fas fa-microchip me-2"></i>RFID Reader Diagnostics</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+            <div class="modal-body p-5 text-center">
+                <div class="mb-4">
+                    <div class="avatar-lg bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-wifi fa-3x"></i>
+                    </div>
+                    <h5>Scan a Card Now</h5>
+                    <p class="text-muted">Tap an RFID card on the reader to test connectivity.</p>
+                </div>
+
+                <div class="mb-4">
+                    <input type="text" 
+                           class="form-control form-control-lg text-center shadow-none" 
+                           id="rfidTestInput" 
+                           placeholder="WAITING..."
+                           readonly>
+                </div>
+                
+                <div class="alert alert-info small text-start mb-0">
+                    <i class="fas fa-info-circle me-1"></i> 
+                    Ensure the reader is plugged in. The input field above will display the tag ID briefly upon a successful scan.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize floating labels
+    document.querySelectorAll('.form-control').forEach(input => {
+        if (input.value) {
+            const label = input.nextElementSibling;
+            if (label && label.classList.contains('form-label')) {
+                label.style.transform = 'translateY(-24px) scale(0.9)';
+                label.style.opacity = '1';
+                label.style.color = '#3b82f6';
+            }
+        }
+    });
+
+    // Camera Test Logic
+    const cameraModal = document.getElementById('cameraTestModal');
+    const startButton = document.getElementById('startCamera');
+    const stopButton = document.getElementById('stopCamera');
+    const cameraPreview = document.getElementById('cameraPreview');
+    const cameraStatus = document.getElementById('cameraStatus');
+    
+    let stream = null;
+
+    cameraModal.addEventListener('show.bs.modal', resetCameraState);
+    cameraModal.addEventListener('hide.bs.modal', stopCameraStream);
+
+    async function startCameraStream() {
+        try {
+            stopCameraStream();
+            const constraints = { video: { width: { ideal: 1280 }, height: { ideal: 720 } } };
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
+            cameraPreview.srcObject = stream;
+            
+            updateCameraStatus('success', '<i class="fas fa-check-circle me-1"></i> Camera Active');
+            startButton.disabled = true;
+            stopButton.disabled = false;
+        } catch (error) {
+            console.error('Error:', error);
+            updateCameraStatus('error', '<i class="fas fa-exclamation-circle me-1"></i> Access Denied / Error');
+        }
+    }
+
+    function stopCameraStream() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            cameraPreview.srcObject = null;
+            stream = null;
+        }
+        updateCameraStatus('warning', 'Camera Stopped');
+        startButton.disabled = false;
+        stopButton.disabled = true;
+    }
+
+    function updateCameraStatus(type, message) {
+        const bgClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-secondary';
+        cameraStatus.className = `text-center py-2 text-white small ${bgClass}`;
+        cameraStatus.innerHTML = message;
+    }
+
+    function resetCameraState() {
+        stopCameraStream();
+        updateCameraStatus('warning', 'Ready to test');
+    }
+
+    startButton.addEventListener('click', startCameraStream);
+    stopButton.addEventListener('click', stopCameraStream);
+
+    // RFID Test Logic
+    const rfidModal = document.getElementById('rfidTestModal');
+    const rfidInput = document.getElementById('rfidTestInput');
+    let rfidBuffer = '';
+    let rfidTimeout = null;
+
+    rfidModal.addEventListener('show.bs.modal', function() {
+        rfidInput.value = '';
+        rfidInput.placeholder = 'WAITING...';
+        rfidBuffer = ''; // Reset buffer on open
+        setTimeout(() => rfidInput.focus(), 500);
+    });
+
+    document.addEventListener('keydown', function(e) {
+        // Only run if modal is open
+        if (!rfidModal.classList.contains('show')) return;
+
+        // 1. Handle "Enter" key (End of RFID scan)
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent form submission or newline
+            if (rfidBuffer.length > 0) {
+                displayScannedId(rfidBuffer);
+                rfidBuffer = ''; // Clear buffer after display
+            }
+            return;
+        }
+
+        // 2. Ignore Modifier keys (Shift, Meta/Command, Ctrl, Alt) 
+        // and prevent "ShiftMeta" from appearing during screenshots
+        if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab'].includes(e.key)) {
+            return;
+        }
+
+        // 3. Capture only single alphanumeric characters
+        // e.key.length === 1 prevents capturing special keys names like "Shift"
+        if (e.key.length === 1 && e.key.match(/[0-9a-zA-Z]/)) {
+            rfidBuffer += e.key;
+            
+            // Clear previous timeout
+            if (rfidTimeout) clearTimeout(rfidTimeout);
+
+            // Fallback: If no "Enter" key is sent, display after silence
+            rfidTimeout = setTimeout(() => {
+                if (rfidBuffer.length > 0) {
+                    displayScannedId(rfidBuffer);
+                    rfidBuffer = '';
+                }
+            }, 200); // reduced timeout for snappier feel
+        }
+    });
+
+    // Helper function to update UI
+    function displayScannedId(id) {
+        rfidInput.value = id;
+        rfidInput.style.borderColor = '#22c55e'; // Green flash
+        rfidInput.style.color = '#22c55e';
+        
+        setTimeout(() => {
+            rfidInput.value = '';
+            rfidInput.style.borderColor = '#cbd5e1';
+            rfidInput.style.color = '#0f172a';
+            rfidInput.placeholder = 'WAITING...';
+        }, 1500);
+    }
+});
+</script>
+{% endblock %}
